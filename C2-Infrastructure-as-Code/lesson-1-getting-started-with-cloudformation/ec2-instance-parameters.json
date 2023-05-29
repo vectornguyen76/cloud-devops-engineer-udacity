@@ -1,0 +1,10 @@
+[
+  {
+    "ParameterKey": "PublicSubnet",
+    "ParameterValue": "subnet-0f90162781a4d6b3a"
+  },
+  {
+    "ParameterKey": "AMItoUse",
+    "ParameterValue": "ami-0715c1897453cabd1"
+  }
+]
