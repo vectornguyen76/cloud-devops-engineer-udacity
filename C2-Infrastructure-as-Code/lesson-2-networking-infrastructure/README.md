@@ -1,3 +1,17 @@
+# Lesson 2
+<p align="center">
+  <img src="./resource/AWSWebApp.jpeg" alt="animated" />
+</p>
+
+### Create Network
+```
+aws cloudformation create-stack --stack-name myNetwork --template-body file://network.yml --parameters file://network-parameters.json --region us-east-1
+```
+### Delete Network
+```
+aws cloudformation delete-stack --stack-name myNetwork --region us-east-1
+```
+
 # Challenge 2 
 ## Project Overview
 You have been tasked with creating the required Infrastructure-as-code scripts for a new cloud environment in AWS. The Lead Solutions Architect for the project sends you the following diagram.
@@ -32,14 +46,12 @@ The numbers in the diagram below show the recommended sequence for resource crea
 
 ## Usage
 ### Create
-Create Stack Network
 ```
-aws cloudformation create-stack --stack-name myNetwork --template-body file://network.yml --parameters file://network-parameters.json --region us-east-1
+aws cloudformation create-stack --stack-name myChallenge2 --template-body file://challenge2.yml --parameters file://challenge2-parameters.json --region us-east-1
 ```
 ### Delete 
-Delete Stack Network
 ```
-aws cloudformation delete-stack --stack-name myNetwork --region us-east-1
+aws cloudformation delete-stack --stack-name myChallenge2 --region us-east-1
 ```
 ## Output
 The stack details should show you the list of resources created successfully:
