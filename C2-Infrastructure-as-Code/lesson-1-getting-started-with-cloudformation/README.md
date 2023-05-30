@@ -21,30 +21,19 @@ Creates a Security Group which only allows inbound access on TCP port 80 and als
 ### 2. AWS::EC2::Instance
 In the same CloudFormation script: create a resource that deploys an EC2 Server and associate its network interface with the security group mentioned above. 
 ## Usage
-### Create
-Create Stack SecurityGroup
+### Create Stack SecurityGroup and EC2 Instance
 ```
-aws cloudformation create-stack --stack-name mySecurityGroup --template-body file://security-group.yml  --parameters file://security-group-parameters.json --region us-east-1
+aws cloudformation create-stack --stack-name myChallenge1 --template-body file://challenge1.yml  --parameters file://challenge1-parameters.json --region us-east-1
 ```
-Create Stack EC2 Instance
+### Delete Stack SecurityGroup and EC2 Instance
 ```
-aws cloudformation create-stack --stack-name myEC2Instance --template-body file://ec2-instance.yml  --parameters file://ec2-instance-parameters.json --region us-east-1
+aws cloudformation delete-stack --stack-name myChallenge1 --region us-east-1
 ```
-### Delete 
-Delete Stack EC2 Instance
-```
-aws cloudformation delete-stack --stack-name myEC2Instance --region us-east-1
-```
-Delete Stack SecurityGroup
-```
-aws cloudformation delete-stack --stack-name mySecurityGroup --region us-east-1
-```
-
-## Expected Output
+## Output
 To verify, you will use the public IP address of the newly launched EC2 instance, and paste it in a new browser window. You should see the Apache web server test page.
 ```
 http://public-ip-address
 ```
 <p align="center">
-  <img src="./resource/Expected-Output.jpg" alt="animated" />
+  <img src="./resource/Output.jpg" alt="animated" />
 </p>
