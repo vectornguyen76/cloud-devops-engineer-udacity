@@ -1,12 +1,28 @@
-# Lesson 2
-### Create Server
+# Lesson 3
+The servers.yml file defines various resources, such as security groups, an autoscaling group, launch configuration, target group, load balancer, and listener. Each type of resource has a different set of properties.
+<p align="center">
+  <img src="./resource/servers.png" alt="animated" />
+</p>
+
+### Note: 
+Create Stack Network in lesson 2 before!
+
+### Create Stack Server
 ```
-aws cloudformation create-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json --region us-east-1
+aws cloudformation create-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" --region us-east-1
 ```
-### Delete Server
+### Update Stack Server
+```
+aws cloudformation update-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" --region us-east-1
+```
+### Delete Stack Server
 ```
 aws cloudformation delete-stack --stack-name myServer --region us-east-1
 ```
+<p align="center">
+  <img src="./resource/output_server.jpg" alt="animated" />
+</p>
+
 # Challenge 3
 The ToDo in the current challenge is continuing to the Challenge 2 that you must have completed in the previous lesson.
 
@@ -50,6 +66,8 @@ Mind the order of the Resources that you want to create. To help you get started
 - If you are running the script using the CLI and the cloudformation create-stack command, please remember to include the --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" option (see the AWS CLI Documentation). This is because we are creating an IAM Role to provide permissions and we want to make the person executing create-stack aware of this fact.
 
 ## Usage
+### Note: 
+Create Stack Challenge2 in lesson 2 before!
 ### Create
 ```
 aws cloudformation create-stack --stack-name myServerSecurity --template-body file://server-security.yml --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" --region us-east-1
@@ -58,8 +76,3 @@ aws cloudformation create-stack --stack-name myServerSecurity --template-body fi
 ```
 aws cloudformation delete-stack --stack-name myServerSecurity --region us-east-1
 ```
-## Output
-The stack details should show you the list of resources created successfully:
-<p align="center">
-  <img src="./resource/Output.jpg" alt="animated" />
-</p>

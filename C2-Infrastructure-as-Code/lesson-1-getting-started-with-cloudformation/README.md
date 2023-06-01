@@ -11,7 +11,7 @@
 </p>
 
 ## ToDo
-### Write a CloudFormation script that will create the following two Resources: AWS::EC2::SecurityGroup and AWS::EC2::Instance. See the snapshot below as a starter point.
+Write a CloudFormation script that will create the following two Resources: AWS::EC2::SecurityGroup and AWS::EC2::Instance. See the snapshot below as a starter point.
 <p align="center">
   <img src="./resource/ToDo.png" alt="animated" />
 </p>
