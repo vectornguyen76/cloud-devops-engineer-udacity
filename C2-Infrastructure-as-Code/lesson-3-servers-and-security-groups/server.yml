@@ -30,9 +30,10 @@ Resources:
         CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
       - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
+        FromPort: 8080
+        ToPort: 8080
         CidrIp: 0.0.0.0/0
+
   WebServerSecGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -42,8 +43,8 @@ Resources:
           !Sub "${EnvironmentName}-VPCID"
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
+        FromPort: 8080
+        ToPort: 8080
         CidrIp: 0.0.0.0/0
       - IpProtocol: tcp
         FromPort: 22
@@ -71,7 +72,7 @@ Resources:
           sudo tee /etc/apt/sources.list.d/docker.list > /dev/null  
           sudo apt-get update -y
           apt-get install -y docker-ce
-          docker run -p 80:8080 tomcat:8.0  
+          docker run -p 8080:8080 tomcat:8.0  
       ImageId: !Ref AMItoUse
       # ToDo: Change the key-pair name, as applicable to you. 
       KeyName: "test_key"
@@ -102,6 +103,8 @@ Resources:
       - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
       SecurityGroups:
       - Ref: LBSecGroup
+
+  # Listen Request from Client to LoadBalancer and forward to TargetGroup
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
@@ -132,7 +135,7 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 8
       HealthyThresholdCount: 2
-      Port: 80
+      Port: 8080
       Protocol: HTTP
       UnhealthyThresholdCount: 5
       VpcId: 

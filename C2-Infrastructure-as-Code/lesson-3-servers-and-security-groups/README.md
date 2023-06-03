@@ -1,7 +1,16 @@
 # Lesson 3
 The servers.yml file defines various resources, such as security groups, an autoscaling group, launch configuration, target group, load balancer, and listener. Each type of resource has a different set of properties.
 <p align="center">
+  <img src="./resource/AWSWebApp.png" alt="animated" />
+</p>
+<p align="center">
   <img src="./resource/servers.png" alt="animated" />
+</p>
+<p align="center">
+  <img src="./resource/aws-loadbalancer-and-target-group.png" alt="animated" />
+</p>
+<p align="center">
+  Relationship between a Load balancer, Listener, Listener Rule, Target group, and an Autoscaling group. We will code them all
 </p>
 
 ### Note: 
@@ -9,11 +18,11 @@ Create Stack Network in lesson 2 before!
 
 ### Create Stack Server
 ```
-aws cloudformation create-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" --region us-east-1
+aws cloudformation create-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json --region us-east-1
 ```
 ### Update Stack Server
 ```
-aws cloudformation update-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" --region us-east-1
+aws cloudformation update-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json --region us-east-1
 ```
 ### Delete Stack Server
 ```
