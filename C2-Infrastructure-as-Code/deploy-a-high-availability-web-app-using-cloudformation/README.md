@@ -28,32 +28,41 @@ Stack Network
 ```
 aws cloudformation create-stack --stack-name myNetwork --template-body file://network.yml --parameters file://network-parameters.json --region us-east-1
 ```
-Output Network 
+
 <p align="center">
   <img src="./resource/output_network.jpg" alt="animated" />
 </p>
+<p align="center">Output VPC</p>
 
 Stack Server
 ```
 aws cloudformation create-stack --stack-name myServer --template-body file://server.yml --parameters file://server-parameters.json  --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" --region us-east-1
 ```
+<p align="center">
+  <img src="./resource/instance.jpg" alt="animated" />
+</p>
+<p align="center">Output Server</p>
+
 Stack Bastion
 ```
 aws cloudformation create-stack --stack-name myBastionHost --template-body file://bastion-host.yml --parameters file://bastion-host-parameters.json  --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" --region us-east-1
 ```
-### Delete 
-Stack Bastion
-```
-aws cloudformation delete-stack --stack-name myBastionHost --region us-east-1
-```
-Stack Server
-```
-aws cloudformation delete-stack --stack-name myServer --region us-east-1
-```
-Stack Network
-```
-aws cloudformation delete-stack --stack-name myNetwork --region us-east-1
-```
+<p align="center">
+  <img src="./resource/bastion_host.jpg" alt="animated" />
+</p>
+<p align="center">Output Bastion Host</p>
+
+<p align="center">
+  <img src="./resource/cloudformation.jpg" alt="animated" />
+</p>
+<p align="center">Output CloudformationVPC</p>
+
+<p align="center">
+  <img src="./resource/output_web.jpg" alt="animated" />
+</p>
+
+[Load balancer URL](http://myser-loadb-1wzjp6pfirbog-1718327459.us-east-1.elb.amazonaws.com/)
+
 ## Bastion to ssh to EC2 to debug
 Get 2 IP Adress
 - IP-bastion-host (Public IP): 50.17.89.64
@@ -80,3 +89,17 @@ ssh -i private-server-keypair.pem ubuntu@IP-private-server
 
 ### Note:
 Recall that the default user name for a Linux system is ec2-user and for an Ubuntu system is ubuntu.
+
+### Delete Resources
+Stack Bastion
+```
+aws cloudformation delete-stack --stack-name myBastionHost --region us-east-1
+```
+Stack Server
+```
+aws cloudformation delete-stack --stack-name myServer --region us-east-1
+```
+Stack Network
+```
+aws cloudformation delete-stack --stack-name myNetwork --region us-east-1
+```

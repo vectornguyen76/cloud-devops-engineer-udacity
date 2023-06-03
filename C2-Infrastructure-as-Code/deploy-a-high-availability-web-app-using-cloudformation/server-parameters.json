@@ -16,7 +16,7 @@
 		"ParameterValue": "private-server-keypair"
   	},
 	{
-		"ParameterKey": "LaunchTemplateVersionNumber",
-		"ParameterValue": "1"
-  	}
+		"ParameterKey": "InstanceType",
+		"ParameterValue": "t3.medium"
+	},
 ]
