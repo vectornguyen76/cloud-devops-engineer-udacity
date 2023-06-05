@@ -19,6 +19,9 @@ jobs:
       - checkout
       - run: echo world
   build:
+    filters:
+      branches:
+        only: master
     environment:
       MY_ENV_VAR: 12345
     docker:
