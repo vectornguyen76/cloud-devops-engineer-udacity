@@ -19,9 +19,6 @@ jobs:
       - checkout
       - run: echo world
   build:
-    filters:
-      branches:
-        only: master
     environment:
       MY_ENV_VAR: 12345
     docker:
@@ -42,4 +39,7 @@ workflows:
       - print_world:
           requires:
             - print_hello
-      - build
+      - build:
+          filters:
+            branches:
+              only: master
