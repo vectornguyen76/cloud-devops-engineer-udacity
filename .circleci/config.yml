@@ -19,6 +19,8 @@ jobs:
       - checkout
       - run: echo world
   build:
+    environment:
+      MY_ENV_VAR: 12345
     docker:
       - image: cimg/base:2020.01
     steps:
