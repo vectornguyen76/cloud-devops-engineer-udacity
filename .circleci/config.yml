@@ -18,6 +18,15 @@ jobs:
     steps:
       - checkout
       - run: echo world
+  build:
+    docker:
+      - image: cimg/base:2020.01
+    steps:
+      - checkout
+      - run:
+          name: "echo an env var that is part of our project"
+          command: |
+            echo $MY_ENV_VAR
 workflows:
   # Name the workflow "welcome"
   welcome:
@@ -28,3 +37,4 @@ workflows:
       - print_world:
           requires:
             - print_hello
+      - build
