@@ -29,7 +29,7 @@ workflows:
     # Run the welcome/run job in its own container
     jobs:
       - welcome/run
-      - print_world
+      - print_hello_world
       - build:
           filters:
             branches:
