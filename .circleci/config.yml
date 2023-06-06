@@ -5,13 +5,26 @@ orbs:
   # Declare a dependency on the welcome-orb
   welcome: circleci/welcome-orb@0.4.1
 # Orchestrate or schedule a set of jobs
+
+commands:
+  sayhello:
+    description: "A very simple command for demonstration purposes"
+    parameters:
+      content:
+        type: string
+        default: "Hello World"
+    steps:
+      - run: echo << parameters.content >>
+
 jobs:
   print_hello_world:
     docker:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - run: echo hello world
+      - sayhello:
+          content: "Our World"
+      - run: echo welcome to world
   build:
     environment:
       MY_ENV_VAR: 12345
