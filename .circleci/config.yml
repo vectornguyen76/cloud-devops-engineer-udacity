@@ -14,9 +14,9 @@ commands:
         type: string
         default: "Hello World"
     steps:
-      - run: echoo << parameters.content >>
+      - run: echo << parameters.content >>
       - run:
-          name: Upload Failed Tests
+          name: Alert Failed
           command: echo "Error"
           when: on_fail
 
