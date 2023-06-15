@@ -18,7 +18,7 @@ commands:
           command: |
             echo 'export WORKSPACE_DIR="/home/circleci/workspace"' >> "$BASH_ENV"
             echo 'export PROJECT_ROOT_DIR="c3-build-cicd-pipeline/final-project"' >> "$BASH_ENV"
-            echo 'export TEMPLATE_ROOT_DIR="c3-build-cicd-pipeline/final-project/infrastructure"' >> "$BASH_ENV"
+            echo 'export TEMPLATE_ROOT_DIR="c3-build-cicd-pipeline/final-project/deployments"' >> "$BASH_ENV"
             echo 'export PROJECT_TAG="VectorNguyen-cicd-project"' >> "$BASH_ENV"
 
   # Exercise - Rollback
