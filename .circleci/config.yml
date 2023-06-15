@@ -32,7 +32,9 @@ jobs:
       _env_name: 123
     steps:
       - print_pipeline_id:
-          id: << pipeline.id >>
+          id: << CIRCLE_WORKFLOW_ID.id >>
+      - print_pipeline_id:
+          id: $CIRCLE_USERNAME
       - print_pipeline_id:
           id: hello print_pipeline_id
       - run: echo HELLO
