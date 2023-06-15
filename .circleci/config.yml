@@ -10,6 +10,15 @@ commands:
         type: string
     steps:
       - run: echo << parameters.id >>
+  export_environment_variable:
+    steps:
+      - run:
+          name: "Export environment variable"
+          command: |
+            echo 'export WORKSPACE_DIR="/home/circleci/workspace"' >> "$BASH_ENV"
+            echo 'export PROJECT_ROOT_DIR="build-cicd-pipeline/final-project"' >> "$BASH_ENV"
+            echo 'export TEMPLATE_ROOT_DIR="build-cicd-pipeline/create-infrastructure"' >> "$BASH_ENV"
+            echo 'export PROJECT_TAG="ThaiDG-Udacity-final-project"' >> "$BASH_ENV"
 
   # Exercise - Rollback
   destroy_environment:
@@ -37,8 +46,6 @@ jobs:
           id: << pipeline.id >>
       - run: echo username $CIRCLE_USERNAME
       - run: "echo Test ENV: $MY_ENV"
-      - run: echo $CIRCLE_WORKING_DIRECTORY
-      - run: echo $TEMPLATE_ROOT_DIR
 
   # Exercise: Sharing Files (Job names may have changed)
   upload_file:
@@ -61,23 +68,30 @@ jobs:
 
   # Exercise: Infrastructure Creation
   # Exercise - Rollback
-  # create_infrastructure: 
-  #   docker:
-  #     - image: amazon/aws-cli
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Create Cloudformation Stack
-  #         command: |
-  #           aws cloudformation deploy \
-  #             --template-file template.yml \
-  #             --parameters file://ec2-parameters.json \
-  #             --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
-  #             --region us-east-1
-  #     # Fail the job intentionally to simulate an error.
-  #     # Uncomment the line below if you want to fail the current step
-  #     # - run: return 1
-  #     - destroy_environment
+  create_infrastructure: 
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export_environment_variable
+      - run: echo $CIRCLE_WORKING_DIRECTORY
+      - run: echo $TEMPLATE_ROOT_DIR
+      - run: 
+          command: pwd
+      # - run:
+      #     name: Create Cloudformation Stack
+      #     command: |
+      #       aws cloudformation deploy \
+      #         --template-file template.yml \
+      #         --parameters file://ec2-parameters.json \
+      #         --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
+      #         --region us-east-1
+      # # Fail the job intentionally to simulate an error.
+      # # Uncomment the line below if you want to fail the current step
+      # # - run: return 1
+      # - destroy_environment
 
 # Sequential workflow
 workflows:
