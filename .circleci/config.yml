@@ -2,6 +2,7 @@ version: 2.1
 # Use a package of configuration called an orb.
 orbs:
   aws-cli: circleci/aws-cli@2.0.3
+  python: circleci/python@2.1.1
 commands:
   # Exercise: Reusable Job Code
   print_pipeline_id:
