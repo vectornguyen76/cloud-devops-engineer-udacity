@@ -16,9 +16,9 @@ commands:
           name: "Export environment variable"
           command: |
             echo 'export WORKSPACE_DIR="/home/circleci/workspace"' >> "$BASH_ENV"
-            echo 'export PROJECT_ROOT_DIR="build-cicd-pipeline/final-project"' >> "$BASH_ENV"
-            echo 'export TEMPLATE_ROOT_DIR="build-cicd-pipeline/create-infrastructure"' >> "$BASH_ENV"
-            echo 'export PROJECT_TAG="ThaiDG-Udacity-final-project"' >> "$BASH_ENV"
+            echo 'export PROJECT_ROOT_DIR="c3-build-cicd-pipeline/final-project"' >> "$BASH_ENV"
+            echo 'export TEMPLATE_ROOT_DIR="c3-build-cicd-pipeline/final-project/infrastructure"' >> "$BASH_ENV"
+            echo 'export PROJECT_TAG="VectorNguyen-cicd-project"' >> "$BASH_ENV"
 
   # Exercise - Rollback
   destroy_environment:
@@ -30,6 +30,27 @@ commands:
           when: on_fail
           command: |
             aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
+
+  deploy_stack:
+    parameters:
+      stack_name:
+        type: string
+      template_file:
+        type: string
+      parameter_overrides:
+        type: string
+    steps:
+      - run:
+          name: "Deploy << parameters.stack_name >> stack"
+          command: |
+            aws cloudformation deploy \
+            --stack-name << parameters.stack_name >> \
+            --template-file << parameters.template_file >> \
+            --parameter-overrides << parameters.parameter_overrides >> \
+            --no-fail-on-empty-changeset \
+            --region us-east-1 \
+            --tags Project="VectorNguyen-cicd-project" \
+            --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM"
 
 # Define the jobs we want to run for this project
 jobs:
@@ -76,22 +97,19 @@ jobs:
       - checkout
       # Export environment variable
       - export_environment_variable
+      # Set up AWS Credentials
+      - aws-cli/setup
+
       - run: echo $CIRCLE_WORKING_DIRECTORY
       - run: echo $TEMPLATE_ROOT_DIR
       - run: 
           command: pwd
-      # - run:
-      #     name: Create Cloudformation Stack
-      #     command: |
-      #       aws cloudformation deploy \
-      #         --template-file template.yml \
-      #         --parameters file://ec2-parameters.json \
-      #         --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
-      #         --region us-east-1
-      # # Fail the job intentionally to simulate an error.
-      # # Uncomment the line below if you want to fail the current step
-      # # - run: return 1
-      # - destroy_environment
+      # All infrastructure does not cost money so don't need to remove when fail
+      # Create networking
+      - deploy_stack:
+          stack_name: 'EC2'
+          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2.yml
+          parameter_overrides: file://$CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2-parameters.json
 
 # Sequential workflow
 workflows:
