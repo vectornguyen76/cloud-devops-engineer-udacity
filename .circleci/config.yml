@@ -1,7 +1,6 @@
 version: 2.1
 # Use a package of configuration called an orb.
 orbs:
-  welcome: circleci/welcome-orb@0.4.1
   aws-cli: circleci/aws-cli@2.0.3
 commands:
   # Exercise: Reusable Job Code
@@ -29,17 +28,15 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     environment:
-      _env_name: 123
+      MY_ENV: 123
     steps:
+      - run: echo HELLO WORLD
+      - print_pipeline_id:
+          id: sample_id
       - print_pipeline_id:
           id: << pipeline.id >>
-      - print_pipeline_id:
-          id: $CIRCLE_USERNAME
-      - print_pipeline_id:
-          id: hello print_pipeline_id
-      - run: echo HELLO
-      - run: echo WORLD
-      - run: echo $_env_name
+      - run: echo username $CIRCLE_USERNAME
+      - run: "echo Test ENV: $MY_ENV"
 
   # Exercise: Sharing Files (Job names may have changed)
   upload_file:
@@ -97,7 +94,6 @@ workflows:
   # Name the workflow
   my_workflow:
     jobs:
-      - welcome/run
       - print_greetings
       - upload_file
       - download_file:
