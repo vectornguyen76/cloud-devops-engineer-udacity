@@ -103,3 +103,4 @@ workflows:
       - download_file:
           requires:
             - upload_file
+      - create_infrastructure
