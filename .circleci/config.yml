@@ -24,7 +24,7 @@ commands:
 
 # Define the jobs we want to run for this project
 jobs:
-  print_greetings:
+  print_hello_world:
     docker:
       - image: circleci/node:13.8.0
     environment:
@@ -94,7 +94,7 @@ workflows:
   # Name the workflow
   my_workflow:
     jobs:
-      - print_greetings
+      - print_hello_world
       - upload_file
       - download_file:
           requires:
