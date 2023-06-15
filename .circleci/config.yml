@@ -34,7 +34,7 @@ jobs:
       - print_pipeline_id:
           id: << pipeline.id >>
       - print_pipeline_id:
-          id: << "hello print_pipeline_id" >>
+          id: << hello print_pipeline_id >>
       - run: echo HELLO
       - run: echo WORLD
       - run: echo $_env_name
