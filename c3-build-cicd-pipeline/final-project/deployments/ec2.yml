@@ -107,7 +107,7 @@ Resources:
   ServerInstance: 
     Type: AWS::EC2::Instance
     Properties:
-      InstanceType: t2.microo
+      InstanceType: t2.micro
       ImageId: !Ref AMItoUse
       KeyName: "my-keypair"
       NetworkInterfaces: 
