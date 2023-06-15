@@ -61,7 +61,7 @@ jobs:
     environment:
       MY_ENV: 123
     steps:
-      - run: echo HELLO WORLD
+      - run: echo HELLO WORLD new
       - print_pipeline_id:
           id: sample_id
       - print_pipeline_id:
