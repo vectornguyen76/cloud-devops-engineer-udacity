@@ -28,6 +28,10 @@ jobs:
   print_greetings:
     docker:
       - image: circleci/node:13.8.0
+    _env_name:
+      Description: 
+      Type: String
+      Default: "hihi"
     steps:
       - print_pipeline_id:
           id: << pipeline.id >>
