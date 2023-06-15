@@ -1,6 +1,7 @@
 version: 2.1
 # Use a package of configuration called an orb.
 orbs:
+  welcome: circleci/welcome-orb@0.4.1
   aws-cli: circleci/aws-cli@2.0.3
 commands:
   # Exercise: Reusable Job Code
@@ -88,7 +89,7 @@ jobs:
 # Sequential workflow
 workflows:
   # Name the workflow
-  myWorkflow:
+  my_workflow:
     jobs:
       - welcome/run
       - print_greetings
