@@ -283,7 +283,6 @@ jobs:
       # Your job code here
 
   deploy-infrastructure:
-    docker:
     executor: aws-cli/default
       # Docker image here that supports AWS CLI
     steps:
