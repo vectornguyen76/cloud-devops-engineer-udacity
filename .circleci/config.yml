@@ -206,7 +206,7 @@ jobs:
             npm install
             npm run build
       - save_cache:
-          paths: [frontend/node_modules]
+          paths: [/home/circleci/project/c3-build-cicd-pipeline/frontend/node_modules]
           key: frontend-build
 
   build-backend:
@@ -222,11 +222,11 @@ jobs:
       - run:
           name: Back-end build
           command: |
-            cd bac
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
             npm install
             npm run build
       - save_cache:
-          paths: [backend/node_modules]
+          paths: [/home/circleci/project/c3-build-cicd-pipeline/backend/node_modules]
           key: backend-build
 
   test-frontend:
@@ -238,9 +238,14 @@ jobs:
       - checkout
       # Export environment variable
       - export
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Test frontend
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/frontend")
+            npm install
+            npm run test
                 
   test-backend:
     docker:
@@ -251,9 +256,14 @@ jobs:
       - checkout
       # Export environment variable
       - export
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Test backend
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+            npm install
+            npm run test
             
   scan-frontend:
     docker:
