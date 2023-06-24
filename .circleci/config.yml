@@ -4,33 +4,26 @@ orbs:
   aws-cli: circleci/aws-cli@2.0.3
   python: circleci/python@2.1.1
 commands:
-  # Exercise: Reusable Job Code
-  print_pipeline_id:
-    parameters:
-      id: 
-        type: string
-    steps:
-      - run: echo << parameters.id >>
-  export_environment_variable:
-    steps:
+  # Reusable Job Code
+  export:
+    steps: 
+      - run:
+          name: "Get git commit short-hash for the current and the previous commit"
+          command: |
+            # Git hash for the current commit
+            echo 'export current_commit=<< pipeline.git.revision >>' >> "$BASH_ENV"
+            echo 'export CUR_SHORT_HASH="${current_commit:0:7}"' >> "$BASH_ENV"
+            # echo 'export CUR_SHORT_HASH="TEST"' >> "$BASH_ENV"
+            # Git hash for the previous commit
+            echo 'export previous_commit=<< pipeline.git.base_revision >>' >> "$BASH_ENV"
+            echo 'export PRE_SHORT_HASH="${previous_commit:0:7}"' >> "$BASH_ENV"
       - run:
           name: "Export environment variable"
           command: |
             echo 'export WORKSPACE_DIR="/home/circleci/workspace"' >> "$BASH_ENV"
-            echo 'export PROJECT_ROOT_DIR="c3-build-cicd-pipeline/final-project"' >> "$BASH_ENV"
-            echo 'export TEMPLATE_ROOT_DIR="c3-build-cicd-pipeline/final-project/deployments"' >> "$BASH_ENV"
-            echo 'export PROJECT_TAG="VectorNguyen-cicd-project"' >> "$BASH_ENV"
-
-  # Exercise - Rollback
-  destroy_environment:
-    steps:
-      - run:
-          name: Destroy environment
-          # ${CIRCLE_WORKFLOW_ID} is a Built-in environment variable 
-          # ${CIRCLE_WORKFLOW_ID:0:5} takes the first 5 chars of the variable CIRCLE_CI_WORKFLOW_ID 
-          when: on_fail
-          command: |
-            aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5}
+            echo 'export PROJECT_ROOT_DIR="c3-build-cicd-pipeline"' >> "$BASH_ENV"
+            echo 'export TEMPLATE_ROOT_DIR=".circleci/files"' >> "$BASH_ENV"
+            echo 'export PROJECT_TAG="udacity-cicd-project"' >> "$BASH_ENV"
 
   deploy_stack:
     parameters:
@@ -50,75 +43,441 @@ commands:
             --parameter-overrides << parameters.parameter_overrides >> \
             --no-fail-on-empty-changeset \
             --region us-east-1 \
-            --tags Project="VectorNguyen-cicd-project" \
+            --tags Project="mlops-project" \
             --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM"
+  destroy_environment:
+    parameters:
+      stack_name:
+        type: string
+      bucket_name:
+        type: string
+        default: ""
+      when:
+        default: "on_fail"
+        type: enum
+        enum: ["always", "on_success", "on_fail"]
+      aws-access-key-id:
+        default: AWS_ACCESS_KEY_ID
+        description: >
+          AWS access key id for IAM role. Set this to the name of
+          the environment variable you will use to hold this
+          value, i.e. AWS_ACCESS_KEY.
+        type: env_var_name
+      aws-region:
+        default: AWS_DEFAULT_REGION
+        description: >
+          Env var of AWS region to operate in
+          (defaults to AWS_DEFAULT_REGION)
+        type: env_var_name
+      aws-secret-access-key:
+        default: AWS_SECRET_ACCESS_KEY
+        description: >
+          AWS secret key for IAM role. Set this to the name of
+          the environment variable you will use to hold this
+          value, i.e. AWS_SECRET_ACCESS_KEY.
+        type: env_var_name
+      profile-name:
+        default: default
+        description: Profile name to be configured.
+        type: string
+    steps:
+      # Set up AWS Credentials when executor != aws cli
+      - run:
+          name: "Install AWS CLI"
+          when: << parameters.when >>
+          command: |
+            if aws --version | grep "aws-cli/" > /dev/null
+            then
+              echo "AWS CLI is already installed, skipping installation."
+              exit 0
+            fi
 
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: "Configure AWS credential"
+          environment:
+            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.aws-access-key-id>>
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.aws-secret-access-key>>
+            PARAM_AWS_CLI_REGION: <<parameters.aws-region>>
+            PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile-name>>
+          when: << parameters.when >>
+          command: |
+            if aws --version | grep "aws-cli/" > /dev/null
+            then
+              echo "Due to AWS CLI is already installed, skipping configuration AWS credential."
+              exit 0
+            fi
+
+            PARAM_AWS_CLI_ACCESS_KEY_ID=$(eval echo "\$$PARAM_AWS_CLI_ACCESS_KEY_ID")
+
+            PARAM_AWS_CLI_SECRET_ACCESS_KEY=$(eval echo "\$$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
+
+            PARAM_AWS_CLI_REGION=$(eval echo "\$$PARAM_AWS_CLI_REGION")
+
+            if [ -z "$PARAM_AWS_CLI_ACCESS_KEY_ID" ] || [ -z "${PARAM_AWS_CLI_SECRET_ACCESS_KEY}" ]
+            then
+              echo "Cannot configure profile. AWS access key id and AWS secret access key must be provided."
+              exit 1
+            fi
+
+            aws configure set \
+              aws_access_key_id "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
+              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+
+            aws configure set \
+              aws_secret_access_key "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
+              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+
+            aws configure set \
+              region "$PARAM_AWS_CLI_REGION" \
+              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
+      - run:
+          name: "Empty << parameters.bucket_name >> bucket"
+          when: << parameters.when >>
+          shell: /bin/bash
+          command: |
+            bucket_name="<< parameters.bucket_name >>"
+
+            if [[ -z $bucket_name ]]
+            then
+              echo "Skip the empty bucket action due to the empty bucket name"
+              exit 0
+            fi
+
+            bucket_uri="s3://$bucket_name"
+            bucket_info=$(aws s3 ls $bucket_uri 2>&1)
+
+            if echo $bucket_info | grep 'NoSuchBucket' > /dev/null
+            then
+              echo "Bucket doesn't exist, skip the empty bucket action"
+              exit 0
+            fi
+
+            # Empty before delete the bucket
+            aws s3 rm $bucket_uri --recursive
+      - run:
+          name: "Delete << parameters.stack_name >> stack"
+          when: << parameters.when >>
+          shell: /bin/bash
+          command: |
+            # Get stack id for the delete_stack waiter
+            stack_info=$(aws cloudformation describe-stacks --stack-name << parameters.stack_name >> --query "Stacks[*] | [0].StackId" 2>&1)
+            if echo $stack_info | grep 'does not exist' > /dev/null
+            then
+              echo "Stack does not exist."
+              echo $stack_info
+              exit 0
+            fi
+            if echo $stack_info | grep 'ValidationError' > /dev/null
+            then
+              echo $stack_info
+              exit 1
+            else
+              aws cloudformation delete-stack --stack-name << parameters.stack_name >>
+              echo $stack_info
+              aws cloudformation wait stack-delete-complete --stack-name $stack_info
+              if [ "<< parameters.when >>" = "on_fail" ]
+              then
+                echo "Roll back completed. Green environment destroyed."
+                exit 0
+              fi
+              echo "Stack << parameters.stack_name >> cleaned up"
+              exit 0
+            fi
+  
 # Define the jobs we want to run for this project
 jobs:
-  print_hello_world:
+  build-frontend:
     docker:
       - image: circleci/node:13.8.0
-    environment:
-      MY_ENV: 123
-    steps:
-      - run: echo HELLO WORLD new
-      - print_pipeline_id:
-          id: sample_id
-      - print_pipeline_id:
-          id: << pipeline.id >>
-      - run: echo username $CIRCLE_USERNAME
-      - run: "echo Test ENV: $MY_ENV"
-
-  # Exercise: Sharing Files (Job names may have changed)
-  upload_file:
-    docker:
-      - image: circleci/node:13.8.0
-    steps:
-      - run: echo "THIS IS A SAMPLE TEXT" > ~/output.txt  
-      - persist_to_workspace:
-          root: ~/
-          paths: 
-            - output.txt  
-
-  download_file:
-    docker:
-      - image: circleci/node:13.8.0
-    steps:
-      - attach_workspace:
-          at: ~/
-      - run: cat ~/output.txt 
-
-  # Exercise: Infrastructure Creation
-  # Exercise - Rollback
-  create_infrastructure: 
-    executor: aws-cli/default
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export_environment_variable
-      # Set up AWS Credentials
-      - aws-cli/setup
+      - export
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Build front-end
+          command: |
+            path_project = @CIRCLE_WORKING_DIRECTORY/@PROJECT_ROOT_DIR
+            cd $path_project/frontend
+            npm install
+            npm run build
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-build
 
-      - run: echo $CIRCLE_WORKING_DIRECTORY
-      - run: echo $TEMPLATE_ROOT_DIR
-      - run: 
-          command: pwd
-      # All infrastructure does not cost money so don't need to remove when fail
-      # Create networking
-      - deploy_stack:
-          stack_name: 'EC2'
-          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2.yml
-          parameter_overrides: file://$CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2-parameters.json
+  build-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Back-end build
+          command: |
+            cd bac
+            npm install
+            npm run build
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-build
 
-# Sequential workflow
+  test-frontend:
+    docker:
+      # Docker image here
+      - image: circleci/node:13.8.0
+    steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      # Checkout code from git
+      # Restore from cache
+      # Your job code here
+                
+  test-backend:
+    docker:
+      # Docker image here
+      - image: circleci/node:13.8.0
+    steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      # Checkout code from git
+      # Restore from cache
+      # Your job code here
+            
+  scan-frontend:
+    docker:
+      # Docker image here
+      - image: circleci/node:13.8.0
+    steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      # Checkout code from git
+      # Restore from cache
+      # Your job code here
+
+  scan-backend:
+    docker:
+      # Docker image here
+      - image: circleci/node:13.8.0
+    steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      # Checkout code from git
+      # Restore from cache
+      # Your job code here
+
+  deploy-infrastructure:
+    docker:
+    executor: aws-cli/default
+      # Docker image here that supports AWS CLI
+    steps:
+      # Checkout code from git
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              #--tags project=your-tag \
+              # --stack-name "your back-end stack name with workflow id" \
+              # --parameter-overrides ID="your workflow id"  
+              exit 1
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              #--tags project=your-tag \
+              # --stack-name "your front-end stack name with workflow id" \
+              # --parameter-overrides ID="your workflow id"  
+              exit 1
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            # Your code here
+            exit 1
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      # Here's where you will add some code to rollback on failure      
+
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+    steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            exit 1
+      # Here's where you will add some code to rollback on failure      
+
+  run-migrations:
+    docker:
+      # Docker image here that supports NodeJS
+    steps:
+      # Checkout code from git
+      - run:
+          name: Run migrations
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Send migration results to memstash
+          command: |
+            # Your code here
+            exit 1
+     # Here's where you will add some code to rollback on failure      
+
+  deploy-frontend:
+    docker:
+      # Docker image here that supports AWS CLI
+    steps:
+      # Checkout code from git
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+      - run:
+          name: Deploy frontend objects
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure      
+                    
+  deploy-backend:
+    docker:
+      # Docker image here that supports Ansible
+    steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Deploy backend
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure  
+
+  smoke-test:
+    docker:
+      # Lightweight Docker image 
+    steps:
+      # Checkout code from git
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+      - run:
+          name: Backend smoke test.
+          command: |
+            # your code here
+      - run:
+          name: Frontend smoke test.
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure  
+
+  cloudfront-update:
+    docker:
+      # Docker image here that supports AWS CLI
+    steps:
+      # Checkout code from git
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            # your code here
+      # Here's where you will add some code to rollback on failure  
+
+cleanup:
+    docker:
+      # Docker image here
+    steps:
+      # Checkout code from git
+      - run:
+          name: Get old stack workflow id
+          command: |
+            # your code here
+            export OldWorkflowID="the id here"
+            export STACKS=[] #put the list of stacks here
+      - run:
+          name: Remove old stacks and files
+          command: |
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              # your code here
+            fi
+            
+
 workflows:
-  # Name the workflow
-  my_workflow:
+  default:
     jobs:
-      - print_hello_world
-      - upload_file
-      - download_file:
-          requires:
-            - upload_file
-      - create_infrastructure
+      - build-frontend
+      - build-backend
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [test-feature-branch]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
+          requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update]
