@@ -275,8 +275,16 @@ jobs:
       # Export environment variable
       - export
       # Checkout code from git
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Scan frontend dependencies
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/frontend")
+            npm install
+            ## npm install oauth-sign@^0.9.0
+            npm audit --audit-level=critical
       # Restore from cache
-      # Your job code here
 
   scan-backend:
     docker:
@@ -289,7 +297,15 @@ jobs:
       - export
       # Checkout code from git
       # Restore from cache
-      # Your job code here
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Scan backend dependencies
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+            npm install
+            ## npm install oauth-sign@^0.9.0
+            npm audit --audit-level=critical
 
   deploy-infrastructure:
     executor: aws-cli/default
