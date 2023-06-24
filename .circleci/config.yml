@@ -202,8 +202,7 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            path_project = @CIRCLE_WORKING_DIRECTORY/@PROJECT_ROOT_DIR
-            cd $path_project/frontend
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/frontend")
             npm install
             npm run build
       - save_cache:
