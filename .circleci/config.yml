@@ -318,8 +318,8 @@ jobs:
       # Here's where you will add some code to rollback on failure      
 
   configure-infrastructure:
-    docker:
-      # Docker image here that supports Ansible
+    # Docker image here that supports Ansible
+    executor: aws-cli/default
     steps:
       # Checkout code from git
       # Add ssh keys with fingerprint
@@ -339,6 +339,7 @@ jobs:
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
+      - image: circleci/node:13.8.0
     steps:
       # Checkout code from git
       - run:
@@ -354,8 +355,8 @@ jobs:
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
-    docker:
-      # Docker image here that supports AWS CLI
+    # Docker image here that supports AWS CLI
+    executor: aws-cli/default
     steps:
       # Checkout code from git
       - run:
@@ -375,8 +376,10 @@ jobs:
       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
-    docker:
-      # Docker image here that supports Ansible
+    # Docker image here that supports Ansible
+    executor: 
+      name: python/default
+      tag: "3.11.2"
     steps:
       # Checkout code from git
       # Add ssh keys with fingerprint
@@ -392,8 +395,10 @@ jobs:
       # Here's where you will add some code to rollback on failure  
 
   smoke-test:
-    docker:
-      # Lightweight Docker image 
+    # Lightweight Docker image 
+    executor: 
+      name: python/default
+      tag: "3.11.2"
     steps:
       # Checkout code from git
       - run:
@@ -415,8 +420,8 @@ jobs:
       # Here's where you will add some code to rollback on failure  
 
   cloudfront-update:
-    docker:
-      # Docker image here that supports AWS CLI
+    # Docker image here that supports AWS CLI
+    executor: aws-cli/default
     steps:
       # Checkout code from git
       - run:
@@ -429,9 +434,8 @@ jobs:
             # your code here
       # Here's where you will add some code to rollback on failure  
 
-cleanup:
-    docker:
-      # Docker image here
+  cleanup:
+    executor: aws-cli/default
     steps:
       # Checkout code from git
       - run:
@@ -447,7 +451,6 @@ cleanup:
             then
               # your code here
             fi
-            
 
 workflows:
   default:
