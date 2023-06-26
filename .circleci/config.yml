@@ -338,7 +338,6 @@ jobs:
               --tags project=project-cicd \
               --stack-name "Udapeople-Backend-$CUR_SHORT_HASH" \
               --parameter-overrides ID="$CUR_SHORT_HASH"  
-              exit 1
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -347,7 +346,6 @@ jobs:
               --tags project=your-tag \
               --stack-name "your front-end stack name with workflow id" \
               --parameter-overrides ID="your workflow id"  
-              exit 1
       - run:
           name: Add back-end ip to ansible inventory
           command: |
