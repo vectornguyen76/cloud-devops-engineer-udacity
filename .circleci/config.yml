@@ -281,7 +281,7 @@ jobs:
           name: Scan frontend dependencies
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/frontend")
-            npmm install
+            npm install
             ## npm install oauth-sign@^0.9.0
             npm audit fix --audit-level=critical --force
             ## If the "npm audit fix" command above could not fix all critical vulnerabilities, try “npm audit fix --force” again
@@ -317,24 +317,36 @@ jobs:
     executor: aws-cli/default
       # Docker image here that supports AWS CLI
     steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - exports
+      # Set up AWS Credentials
+      - aws-cli/setup
+    #   # Create backend infrastructure
+    #   - deploy_stack:
+    #       stack_name: Udapeople-Backend-$CUR_SHORT_HASH
+    #       template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2-instances.yml
+    #       parameter_overrides: file://$CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2-instances-parameters.json
+    # steps:
       # Checkout code from git
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your back-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
+              --tags project=project-cicd \
+              --stack-name "Udapeople-Backend-$CUR_SHORT_HASH" \
+              --parameter-overrides ID="$CUR_SHORT_HASH"  
               exit 1
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your front-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
+              --tags project=your-tag \
+              --stack-name "your front-end stack name with workflow id" \
+              --parameter-overrides ID="your workflow id"  
               exit 1
       - run:
           name: Add back-end ip to ansible inventory
