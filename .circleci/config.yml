@@ -403,7 +403,7 @@ jobs:
       # Export environment variable
       - export
       - add_ssh_keys:
-          fingerprints: ["c2:84:20:b3:bc:15:1b:1c:2e:32:54:00:98:f8:7d:81"]
+          fingerprints: ["61:22:79:6b:8b:79:4e:87:e1:ae:71:57:02:9d:1a:f2"]
       - python/install-packages:
           args: ansible
       - attach_workspace:
@@ -421,21 +421,64 @@ jobs:
 
   run-migrations:
     docker:
-      # Docker image here that supports NodeJS
       - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
       - run:
           name: Run migrations
           command: |
-            # Your code here
-            exit 1
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+            # Install dependencies
+            npm install
+            # Run and save the migration output
+            npm run migrations > migrations_dump.txt
+            # Cat file
+            cat migrations_dump.txt
       - run:
-          name: Send migration results to memstash
+          name: "Install redis-cli"
           command: |
-            # Your code here
-            exit 1
-     # Here's where you will add some code to rollback on failure      
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+            if cat migrations_dump.txt | grep "No migrations are pending"
+            then
+              echo "Skip Redis installation phase"
+              exit 0
+            fi
+            # no error if existing, make parent directories as needed
+            mkdir --parents ~/tmp
+            cd ~/tmp
+            wget http://download.redis.io/redis-stable.tar.gz
+            tar xvzf redis-stable.tar.gz
+            cd redis-stable
+            make
+            sudo cp src/redis-cli /usr/local/bin/
+            sudo chmod 755 /usr/local/bin/redis-cli
+      - run:
+          name: Send migration results to redis-cloud
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+
+            if cat migrations_dump.txt | grep "has been executed successfully."
+            then
+              redis-cli \
+                -h redis-19031.c252.ap-southeast-1-1.ec2.cloud.redislabs.com \
+                -p 19031 \
+                --user $REDIS_CLI_USERNAME \
+                --pass $REDIS_CLI_PASSWORD \
+              SET migration_${CUR_SHORT_HASH} 1
+            fi
+
+            echo "No migration has been executed."
+      # Rollback if fail
+      - revert-migrations:
+          migrations-key: migration_$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Backend-$CUR_SHORT_HASH
+    
 
   deploy-frontend:
     # Docker image here that supports AWS CLI
