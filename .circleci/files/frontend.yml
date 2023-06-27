@@ -35,13 +35,9 @@ Outputs:
         - "WebsiteBucket"
         - "WebsiteURL"
     Export:
-      Name:
-        Fn::Join:
-          - ""
-          - - Ref: "AWS::StackName"
-            - "-WebsiteURL"
+      Name: "Frontend-WebsiteURL"
 
-    WebsiteBucketName:
-        Description: "S3 bucket name"
-        Value:
-            Ref: "WebsiteBucket"
+  WebsiteBucketName:
+    Description: "S3 bucket name"
+    Value:
+      Ref: "WebsiteBucket"
