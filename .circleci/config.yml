@@ -472,8 +472,8 @@ jobs:
 
             echo "No migration has been executed."
       # Rollback if fail
-      - revert-migrations:
-          migrations-key: migration_$CUR_SHORT_HASH
+      # - revert-migrations:
+      #     migrations-key: migration_$CUR_SHORT_HASH
       - destroy_environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
       - destroy_environment:
