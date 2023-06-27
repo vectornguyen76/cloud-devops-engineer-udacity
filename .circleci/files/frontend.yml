@@ -1,16 +1,15 @@
-Description: >
-  UdaPeople frontend stack.
+Description: UdaPeople frontend stack.
 
 Parameters:
-  ID:
-    Description: Unique identifier.
+  BucketName:
+    Description: "The Bucket name"
     Type: String
 
 Resources:
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "udapeople-${ID}"
+      BucketName: !Ref BucketName
       AccessControl: PublicRead
       WebsiteConfiguration:
         IndexDocument: index.html
@@ -19,7 +18,7 @@ Resources:
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref 'WebsiteBucket'
+      Bucket: !Ref WebsiteBucket
       PolicyDocument:
         Statement:
         - Sid: PublicReadForGetBucketObjects
@@ -30,5 +29,19 @@ Resources:
 
 Outputs:
   WebsiteURL:
-    Value: !GetAtt WebsiteBucket.WebsiteURL
-    Description: URL for website hosted on S3
+    Description: "S3 static host endpoint"
+    Value:
+      Fn::GetAtt:
+        - "WebsiteBucket"
+        - "WebsiteURL"
+    Export:
+      Name:
+        Fn::Join:
+          - ""
+          - - Ref: "AWS::StackName"
+            - "-WebsiteURL"
+
+    WebsiteBucketName:
+        Description: "S3 bucket name"
+        Value:
+            Ref: "WebsiteBucket"

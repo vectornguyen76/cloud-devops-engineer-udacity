@@ -313,6 +313,41 @@ jobs:
             npm audit fix --force
             npm audit --audit-level=critical
 
+  deploy-frontend-infrastructure:
+    executor: aws-cli/default
+    steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      # Set up AWS Credentials
+      - aws-cli/setup
+      # Create frontend server
+      - deploy_stack:
+          stack_name: Udapeople-Frontend-${CUR_SHORT_HASH}
+          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/bucket.yml
+          parameter_overrides: BucketName=udapeople-frontend-$CUR_SHORT_HASH
+      - run:
+          name: "Fetch and save the static host of the current bucket"
+          command: |
+            # no error if existing, make parent directories as needed
+            mkdir --parents $WORKSPACE_DIR
+            touch $WORKSPACE_DIR/websiteurl
+            static_export_name=Udapeople-Frontend-$CUR_SHORT_HASH-WebsiteURL
+            host=$(aws cloudformation list-exports \
+            --query "Exports[?Name==\`$static_export_name\`].Value" \
+            --no-paginate --output text)
+            # Remove prefix ending in "//"
+            static_host=${host#*//}
+            echo $static_host > $WORKSPACE_DIR/websiteurl
+      - persist_to_workspace:
+          root: /home/circleci/workspace
+          paths: 
+            - websiteurl
+      # Rollback if fail
+      - destroy_environment:
+          stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
+
   deploy-backend-infrastructure:
     executor: aws-cli/default
       # Docker image here that supports AWS CLI
@@ -499,29 +534,52 @@ workflows:
       - build-frontend
       - build-backend
       - test-frontend:
-          requires: [build-frontend]
+          requires: 
+            - build-frontend
       - test-backend:
-          requires: [build-backend]
+          requires: 
+            - build-backend
       - scan-backend:
-          requires: [build-backend]
+          requires: 
+            - build-backend
       - scan-frontend:
-          requires: [build-frontend]
-      - deploy-backend-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: 
+          - build-frontend
+      - deploy-frontend-infrastructure:
+          requires: 
+            - test-frontend
+            - scan-frontend
           filters:
             branches:
-              only: [main]
+              only:
+                - main
+      - deploy-backend-infrastructure:
+          requires: 
+            - test-backend
+            - scan-backend
+          filters:
+            branches:
+              only:
+                - main
       - configure-infrastructure:
-          requires: [deploy-backend-infrastructure]
+          requires:
+            - deploy-backend-infrastructure
       - run-migrations:
-          requires: [configure-infrastructure]
+          requires:
+            - configure-infrastructure
       - deploy-frontend:
-          requires: [run-migrations]
+          requires:
+            - run-migrations
       - deploy-backend:
-          requires: [run-migrations]
+          requires:
+            - run-migrations
       - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+          requires:
+            - deploy-backend
+            - deploy-frontend
       - cloudfront-update:
-          requires: [smoke-test]
+          requires:
+            - smoke-test
       - cleanup:
-          requires: [cloudfront-update]
+          requires:
+            - cloudfront-update
