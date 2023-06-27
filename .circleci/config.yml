@@ -306,6 +306,7 @@ jobs:
           name: Scan backend dependencies
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+            npm audit fix --force
             npm install
             ## npm install oauth-sign@^0.9.0
             npm audit fix --audit-level=critical --force
