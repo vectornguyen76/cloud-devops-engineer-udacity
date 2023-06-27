@@ -313,7 +313,7 @@ jobs:
             npm audit fix --force
             npm audit --audit-level=critical
 
-  deploy-infrastructure:
+  deploy-backend-infrastructure:
     executor: aws-cli/default
       # Docker image here that supports AWS CLI
     steps:
@@ -323,39 +323,40 @@ jobs:
       - export
       # Set up AWS Credentials
       - aws-cli/setup
-    #   # Create backend infrastructure
-    #   - deploy_stack:
-    #       stack_name: Udapeople-Backend-$CUR_SHORT_HASH
-    #       template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2-instances.yml
-    #       parameter_overrides: file://$CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2-instances-parameters.json
-    # steps:
-      # Checkout code from git
+      # Create backend infrastructure
+      - deploy_stack:
+          stack_name: Udapeople-Backend-$CUR_SHORT_HASH
+          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/backend.yml
+          parameter_overrides: file://$CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/backend-parameters.json
       - run:
-          name: Ensure back-end infrastructure exists
+          name: "Get backend URL"
           command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/backend.yml \
-              --tags project=project-cicd \
-              --stack-name "Udapeople-Backend-$CUR_SHORT_HASH" \
-              --parameter-overrides ID="$CUR_SHORT_HASH"  
-      - run:
-          name: Ensure front-end infrastructure exist
-          command: |
-            aws cloudformation deploy \
-              --template-file .circleci/files/frontend.yml \
-              --tags project=your-tag \
-              --stack-name "your front-end stack name with workflow id" \
-              --parameter-overrides ID="your workflow id"  
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            # Your code here
-            exit 1
+            # no error if existing, make parent directories as needed
+            mkdir --parents $WORKSPACE_DIR
+            # Create file
+            touch $WORKSPACE_DIR/backendpublicdns
+            backend_public_dns=Udapeople-Backend-$CUR_SHORT_HASH-PublicDNS
+            # Pull the export value
+            host=$(aws cloudformation list-exports \
+            --query "Exports[?Name==\`$backend_public_dns\`].Value" \
+            --no-paginate --output text)
+            # Append the DNS to the inventory file
+            echo $host >> $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/inventory.txt")
+            # Move to workspace
+            mv $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/inventory.txt $WORKSPACE_DIR/inventory.txt")
+            # Setup API_URL for frontend to use
+            API_URL="http://${host}:3030"
+            echo "${API_URL}"
+            # Store in workspace
+            echo $API_URL > $WORKSPACE_DIR/backendpublicdns
       - persist_to_workspace:
-          root: ~/
+          root: /home/circleci/workspace
           paths:
-            - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+            - "inventory.txt"
+            - "backendpublicdns"
+      # Rollback if fail
+      - destroy_environment:
+          stack_name: Udapeople-Backend-$CUR_SHORT_HASH    
 
   configure-infrastructure:
     # Docker image here that supports Ansible
