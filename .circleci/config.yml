@@ -427,6 +427,8 @@ jobs:
       - checkout
       # Export environment variable
       - export
+      - restore_cache:
+          keys: [backend-build]
       - run:
           name: Run migrations
           command: |
