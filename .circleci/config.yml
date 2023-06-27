@@ -325,7 +325,7 @@ jobs:
       # Create frontend server
       - deploy_stack:
           stack_name: Udapeople-Frontend-${CUR_SHORT_HASH}
-          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/bucket.yml
+          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/frontend.yml
           parameter_overrides: BucketName=udapeople-frontend-$CUR_SHORT_HASH
       - run:
           name: "Fetch and save the static host of the current bucket"
