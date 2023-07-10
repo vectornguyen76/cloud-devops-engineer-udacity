@@ -438,20 +438,39 @@ jobs:
             # Cat file
             cat migrations_dump.txt
       - run:
-          name: Send migration status to kvdb.io
+          name: "Install redis-cli"
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+            if cat migrations_dump.txt | grep "No migrations are pending"
+            then
+              echo "Skip Redis installation phase"
+              exit 0
+            fi
+            # no error if existing, make parent directories as needed
+            mkdir --parents ~/tmp
+            cd ~/tmp
+            wget http://download.redis.io/redis-stable.tar.gz
+            tar xvzf redis-stable.tar.gz
+            cd redis-stable
+            make
+            sudo cp src/redis-cli /usr/local/bin/
+            sudo chmod 755 /usr/local/bin/redis-cli
+      - run:
+          name: Send migration results to redis-cloud
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
 
             if cat migrations_dump.txt | grep "has been executed successfully."
             then
-              echo KVDB_BUCKET_ID $KVDB_BUCKET_ID
-
-              # Generate the bucket ID in https://kvdb.io/
-              curl https://kvdb.io/$KVDB_BUCKET_ID/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+              redis-cli \
+                -h redis-16107.c85.us-east-1-2.ec2.cloud.redislabs.com\
+                -p 16107 \
+                --user $REDIS_CLI_USERNAME \
+                --pass $REDIS_CLI_PASSWORD \
+              SET migration_${CUR_SHORT_HASH} 1
             fi
 
             echo "No migration has been executed."
-
       # Rollback if fail
       # - revert-migrations:
       #     migrations-key: migration_$CUR_SHORT_HASH
