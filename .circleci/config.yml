@@ -25,6 +25,45 @@ commands:
             echo 'export TEMPLATE_ROOT_DIR=".circleci/files"' >> "$BASH_ENV"
             echo 'export PROJECT_TAG="udacity-cicd-project"' >> "$BASH_ENV"
 
+  revert-migrations:
+    description: "Revert last migrations"
+    parameters:
+      migrations-key:
+        type: string
+        default: ""
+
+    steps:
+      - run:
+          name: "Revert migrations if fail"
+          when: "on_fail"
+          command: |
+            PARAM_REDIS_CLI_HOST=$(eval echo "\$$PARAM_REDIS_CLI_HOST")
+            PARAM_REDIS_CLI_PORT=$(eval echo "\$$PARAM_REDIS_CLI_PORT")
+            PARAM_REDIS_CLI_USERNAME=$(eval echo "\$$PARAM_REDIS_CLI_USERNAME")
+            PARAM_REDIS_CLI_PASSWORD=$(eval echo "\$$PARAM_REDIS_CLI_PASSWORD")
+            
+            SUCCESS=$(
+              redis-cli \
+                -h $PARAM_REDIS_CLI_HOST \
+                -p $PARAM_REDIS_CLI_PORT \
+                --user $PARAM_REDIS_CLI_USERNAME \
+                --pass $PARAM_REDIS_CLI_PASSWORD \
+              GET $PARAM_MIGRATIONS_KEY
+            )
+            curl --insecure https://kvdb.io/$KVDB_BUCKET_ID/migration_$CUR_SHORT_HASH
+
+            if [[ -z $SUCCESS ]]
+            then
+              echo "No migration to revert"
+              exit 0
+            fi
+
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
+            # Install dependencies
+            npm install
+            # Revert migration on fail
+            npm run migrations:revert
+
   deploy_stack:
     parameters:
       stack_name:
@@ -438,42 +477,17 @@ jobs:
             # Cat file
             cat migrations_dump.txt
       - run:
-          name: "Install redis-cli"
-          command: |
-            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
-            if cat migrations_dump.txt | grep "No migrations are pending"
-            then
-              echo "Skip Redis installation phase"
-              exit 0
-            fi
-            # no error if existing, make parent directories as needed
-            mkdir --parents ~/tmp
-            cd ~/tmp
-            wget http://download.redis.io/redis-stable.tar.gz
-            tar xvzf redis-stable.tar.gz
-            cd redis-stable
-            make
-            sudo cp src/redis-cli /usr/local/bin/
-            sudo chmod 755 /usr/local/bin/redis-cli
-      - run:
-          name: Send migration results to redis-cloud
+          name: Send migration status to kvdb.io
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
 
             if cat migrations_dump.txt | grep "has been executed successfully."
             then
-              redis-cli \
-                -h redis-16107.c85.us-east-1-2.ec2.cloud.redislabs.com\
-                -p 16107 \
-                --user $REDIS_CLI_USERNAME \
-                --pass $REDIS_CLI_PASSWORD \
-              SET migration_${CUR_SHORT_HASH} 1
+              curl --insecure https://kvdb.io/$KVDB_BUCKET_ID/migration_$CUR_SHORT_HASH  -d '1'
             fi
-
-            echo "No migration has been executed."
       # Rollback if fail
-      # - revert-migrations:
-      #     migrations-key: migration_$CUR_SHORT_HASH
+      - revert-migrations:
+          migrations-key: migration_$CUR_SHORT_HASH
       - destroy_environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
       - destroy_environment:
