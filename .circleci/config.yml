@@ -369,20 +369,20 @@ jobs:
           command: |
             # no error if existing, make parent directories as needed
             mkdir --parents $WORKSPACE_DIR
-            touch $WORKSPACE_DIR/websiteurl
+            touch $WORKSPACE_DIR/mywebsiteurl
             static_export_name=Udapeople-Frontend-$CUR_SHORT_HASH-WebsiteURL
             host=$(aws cloudformation list-exports \
             --query "Exports[?Name==\`$static_export_name\`].Value" \
             --no-paginate --output text)
             # Remove prefix ending in "//"
             static_host=${host#*//}
-            echo $static_host > $WORKSPACE_DIR/websiteurl
+            echo $static_host > $WORKSPACE_DIR/mywebsiteurl
             echo debug
-            cat $WORKSPACE_DIR/websiteurl
+            cat $WORKSPACE_DIR/mywebsiteurl
       - persist_to_workspace:
           root: /home/circleci/workspace
           paths: 
-            - "websiteurl"
+            - "mywebsiteurl"
       # Rollback if fail
       - destroy_environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
