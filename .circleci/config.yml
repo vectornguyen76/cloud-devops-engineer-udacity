@@ -382,7 +382,7 @@ jobs:
       - persist_to_workspace:
           root: /home/circleci/workspace
           paths: 
-            - "mywebsiteurl"
+            - "websiteurl"
       # Rollback if fail
       - destroy_environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
