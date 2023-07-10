@@ -444,6 +444,8 @@ jobs:
 
             if cat migrations_dump.txt | grep "has been executed successfully."
             then
+              echo KVDB_BUCKET_ID $KVDB_BUCKET_ID
+
               # Generate the bucket ID in https://kvdb.io/
               curl https://kvdb.io/$KVDB_BUCKET_ID/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
