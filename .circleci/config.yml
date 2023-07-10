@@ -493,27 +493,50 @@ jobs:
       - destroy_environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH
     
-
   deploy-frontend:
-    # Docker image here that supports AWS CLI
-    executor: aws-cli/default
+    docker:
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      - attach_workspace:
+          at: /home/circleci/workspace
+      - restore_cache:
+          keys: [frontend-build]
       - run:
-          name: Install dependencies
+          name: "Install AWS CLI"
           command: |
-            # your code here
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure      
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/frontend")
+            # Create .env file
+            touch .env
+            # Get backend URL
+            API_URL=$(cat $WORKSPACE_DIR/backendpublicdns)
+            echo API_URL="$API_URL" > .env
+            # Install node modules
+            npm install
+            # Build project
+            npm run build
+            # Compress the build artifact
+            tar -czvf "artifact-$CUR_SHORT_HASH.tar.gz" dist
+            # Deploy frontend artifact
+            aws s3 sync dist s3://udapeople-frontend-$CUR_SHORT_HASH --delete
+      # Here's where you will add some code to rollback on failure
+      # Rollback if fail
+      - revert-migrations:
+          migrations-key: migration_$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
+          bucket_name: udapeople-frontend-$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Backend-$CUR_SHORT_HASH   
                     
   deploy-backend:
     # Docker image here that supports Ansible
