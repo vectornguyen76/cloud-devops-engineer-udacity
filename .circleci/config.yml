@@ -448,6 +448,12 @@ jobs:
       - attach_workspace:
           at: /home/circleci/workspace
       - run:
+          name: Frontend smoke test.
+          command: |
+            static_host=$(cat $WORKSPACE_DIR/websiteurl)
+            URL="http://$static_host/#/employees"
+            echo ${URL}
+      - run:
           name: Run Playbook and Configure server
           command: |
             ansible-playbook -i $WORKSPACE_DIR/inventory.txt $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/configure-server.yml")
