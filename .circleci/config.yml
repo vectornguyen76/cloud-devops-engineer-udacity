@@ -37,20 +37,9 @@ commands:
           name: "Revert migrations if fail"
           when: "on_fail"
           command: |
-            PARAM_REDIS_CLI_HOST=$(eval echo "\$$PARAM_REDIS_CLI_HOST")
-            PARAM_REDIS_CLI_PORT=$(eval echo "\$$PARAM_REDIS_CLI_PORT")
-            PARAM_REDIS_CLI_USERNAME=$(eval echo "\$$PARAM_REDIS_CLI_USERNAME")
-            PARAM_REDIS_CLI_PASSWORD=$(eval echo "\$$PARAM_REDIS_CLI_PASSWORD")
+            SUCCESS=$(curl --insecure https://kvdb.io/$KVDB_BUCKET_ID/migration_$CUR_SHORT_HASH)
             
-            SUCCESS=$(
-              redis-cli \
-                -h $PARAM_REDIS_CLI_HOST \
-                -p $PARAM_REDIS_CLI_PORT \
-                --user $PARAM_REDIS_CLI_USERNAME \
-                --pass $PARAM_REDIS_CLI_PASSWORD \
-              GET $PARAM_MIGRATIONS_KEY
-            )
-            curl --insecure https://kvdb.io/$KVDB_BUCKET_ID/migration_$CUR_SHORT_HASH
+            echo SUCCESS $SUCCESS
 
             if [[ -z $SUCCESS ]]
             then
