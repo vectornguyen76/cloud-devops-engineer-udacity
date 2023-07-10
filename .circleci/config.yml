@@ -38,8 +38,6 @@ commands:
           when: "on_fail"
           command: |
             SUCCESS=$(curl --insecure https://kvdb.io/$KVDB_BUCKET_ID/migration_$CUR_SHORT_HASH)
-            
-            echo SUCCESS $SUCCESS
 
             if [[ -z $SUCCESS ]]
             then
@@ -379,6 +377,8 @@ jobs:
             # Remove prefix ending in "//"
             static_host=${host#*//}
             echo $static_host > $WORKSPACE_DIR/websiteurl
+            echo debug
+            cat $WORKSPACE_DIR/websiteurl
       - persist_to_workspace:
           root: /home/circleci/workspace
           paths: 
