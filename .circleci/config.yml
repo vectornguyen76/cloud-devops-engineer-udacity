@@ -630,7 +630,7 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - exports
+      - export
       # Set up AWS Credentials
       - aws-cli/setup
       - attach_workspace:
