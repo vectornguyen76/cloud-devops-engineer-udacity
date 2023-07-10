@@ -585,44 +585,84 @@ jobs:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH
 
   smoke-test:
-    # Lightweight Docker image 
-    executor: 
-      name: python/default
-      tag: "3.11.2"
+    executor: aws-cli/default
     steps:
-      # Checkout code from git
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
-      - run:
-          name: Backend smoke test.
-          command: |
-            # your code here
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      # Set up AWS Credentials
+      - aws-cli/setup
+      - attach_workspace:
+          at: /home/circleci/workspace
       - run:
           name: Frontend smoke test.
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+            static_host=$(cat $WORKSPACE_DIR/websiteurl)
+            URL="http://$static_host/#/employees"
+            echo ${URL}
+            test_result=$(curl -s "$URL")
+            if echo $test_result | grep "Welcome" > /dev/null
+            then
+              echo "Frontend test passed"
+              echo $test_result
+              exit 0
+            else
+              echo $test_result
+              exit 1
+            fi
+      - run:
+          name: "Backend smoke test"
+          command: |
+            API_URL=$(cat $WORKSPACE_DIR/backendpublicdns)
+            echo $API_URL
+            curl --version
+            # When the backend server is not ready, let retry upto 30mins
+            test_result=$(eval curl \
+              --verbose --fail \
+              --retry 360 --retry-max-time 1800 --retry-all-errors \
+              --url "$API_URL/api/status")
+            if echo $test_result | grep "ok" > /dev/null
+            then
+              echo "Backend test passed"
+              echo $test_result
+              exit 0
+            else
+              echo $test_result
+              exit 1
+            fi
+      # Rollback if fail
+      - revert-migrations:
+          migrations-key: migration_$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
+          bucket_name: udapeople-frontend-$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Backend-$CUR_SHORT_HASH 
 
-  cloudfront-update:
-    # Docker image here that supports AWS CLI
+  promote-to-production:
     executor: aws-cli/default
     steps:
-      # Checkout code from git
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - exports
+      # Set up AWS Credentials
+      - aws-cli/setup
+      - attach_workspace:
+          at: /home/circleci/workspace
+      - deploy_stack:
+          stack_name: production-distro
+          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/cloudfront.yml
+          parameter_overrides: S3StaticHost=$(cat $WORKSPACE_DIR/websiteurl)
+      # Rollback if fail
+      - revert-migrations:
+          migrations-key: migration_$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
+          bucket_name: udapeople-frontend-$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Backend-$CUR_SHORT_HASH 
 
   clean-up:
     executor: aws-cli/default
@@ -725,9 +765,9 @@ workflows:
           requires:
             - deploy-backend
             - deploy-frontend
-      - cloudfront-update:
+      - promote-to-production:
           requires:
             - smoke-test
       - clean-up:
           requires:
-            - cloudfront-update
+            - promote-to-production
