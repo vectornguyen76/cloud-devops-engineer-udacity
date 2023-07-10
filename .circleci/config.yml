@@ -264,6 +264,17 @@ jobs:
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/backend")
             npm install
             npm run build
+            cd ..
+            # Compress the backend folder
+            tar -C backend -czvf artifact-backend.tar.gz .
+            # no error if existing, make parent directories as needed
+            mkdir --parents $WORKSPACE_DIR
+            # Move the compressed file to workspace folder
+            mv artifact-backend.tar.gz $WORKSPACE_DIR/artifact-backend.tar.gz
+      - persist_to_workspace:
+          root: /home/circleci/workspace
+          paths:
+            - "artifact-backend.tar.gz"
       - save_cache:
           paths: [/home/circleci/project/c3-build-cicd-pipeline/backend/node_modules]
           key: backend-build
@@ -524,9 +535,9 @@ jobs:
             npm install
             # Build project
             npm run build
-            # Compress the build artifact
+            # Compress the build artifact and zip to dict folder
             tar -czvf "artifact-$CUR_SHORT_HASH.tar.gz" dist
-            # Deploy frontend artifact
+            # Deploy frontend artifact (dict folder)
             aws s3 sync dist s3://udapeople-frontend-$CUR_SHORT_HASH --delete
       # Here's where you will add some code to rollback on failure
       # Rollback if fail
@@ -539,23 +550,39 @@ jobs:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH   
                     
   deploy-backend:
-    # Docker image here that supports Ansible
     executor: 
       name: python/default
       tag: "3.11.2"
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
-      - run:
-          name: Install dependencies
-          command: |
-            # your code here
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      - add_ssh_keys:
+          fingerprints: ["61:22:79:6b:8b:79:4e:87:e1:ae:71:57:02:9d:1a:f2"]
+      - python/install-packages:
+          args: ansible
+      - attach_workspace:
+          at: /home/circleci/workspace
       - run:
           name: Deploy backend
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+            # Move the compressed file to ansible folder
+            # no error if existing, make parent directories as needed
+            mkdir --parents $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/roles/deploy/files")
+            mv $WORKSPACE_DIR/artifact-backend.tar.gz $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/roles/deploy/files/artifact-backend.tar.gz")
+      - run:
+          name: "Ansible play book for deploy backend"
+          command: |
+            ansible-playbook -i $WORKSPACE_DIR/inventory.txt $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/deploy-backend.yml")
+      # Rollback if fail
+      - revert-migrations:
+          migrations-key: migration_$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
+          bucket_name: udapeople-frontend-$CUR_SHORT_HASH
+      - destroy_environment:
+          stack_name: Udapeople-Backend-$CUR_SHORT_HASH
 
   smoke-test:
     # Lightweight Docker image 
