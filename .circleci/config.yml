@@ -658,7 +658,7 @@ jobs:
       - deploy_stack:
           stack_name: production-distro
           template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/cloudfront.yml
-          parameter_overrides: S3StaticHost=$(cat $WORKSPACE_DIR/websiteurl)
+          parameter_overrides: S3StaticHostUrl=$(cat $WORKSPACE_DIR/websiteurl)
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH

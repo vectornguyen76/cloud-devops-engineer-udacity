@@ -2,9 +2,10 @@ Description: >
   Cloudfront distribution for UdaPeople.
 
 Parameters:
-  WorkflowID:
-    Description: Unique identifier.
+  S3StaticHostUrl:
     Type: String
+    Description: "S3 static website endpoint"
+    Default: "s3-us-east-1.s3-website-us-east-1.amazonaws.com"
 
 Resources:
   
@@ -19,7 +20,7 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub "udapeople-${WorkflowID}.s3.amazonaws.com"
+          - DomainName: !Ref S3StaticHostUrl
             Id: webpage
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
@@ -32,8 +33,11 @@ Resources:
           ViewerProtocolPolicy: allow-all
 
 Outputs:
-  WorkflowID:
-    Value: !Sub ${WorkflowID}
-    Description: URL for website hosted on S3
+  DomainName:
+    Description: "Cloud Front domain name"
+    Value:
+      Fn::GetAtt:
+        - WebpageCDN
+        - DomainName
     Export:
-      Name: WorkflowID
+      Name: "DomainName"
