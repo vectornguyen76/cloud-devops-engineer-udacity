@@ -590,6 +590,19 @@ jobs:
             static_host=$(cat $WORKSPACE_DIR/websiteurl)
             URL="http://$static_host/#/employees"
             echo ${URL}
+            if curl -s ${URL} | grep "Welcome"
+            then
+              # Change this to 0 after the job fails
+              return 1
+            else
+              return 1
+            fi
+      - run:
+          name: Frontend smoke test.
+          command: |
+            static_host=$(cat $WORKSPACE_DIR/websiteurl)
+            URL="http://$static_host/#/employees"
+            echo ${URL}
             test_result=$(curl -s "$URL")
             if echo $test_result | grep "Welcome" > /dev/null
             then
