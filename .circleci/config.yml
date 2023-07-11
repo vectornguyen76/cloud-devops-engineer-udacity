@@ -658,7 +658,7 @@ jobs:
       - deploy_stack:
           stack_name: InitialStack
           template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/cloudfront.yml
-          parameter_overrides: WorkflowID=$CUR_SHORT_HASH
+          parameter_overrides: S3StaticHostUrl="udapeople-frontend-$CUR_SHORT_HASH.s3.amazonaws.com"
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH
