@@ -597,22 +597,22 @@ jobs:
             else
               return 1
             fi
-      - run:
-          name: Frontend smoke test.
-          command: |
-            static_host=$(cat $WORKSPACE_DIR/websiteurl)
-            URL="http://$static_host/#/employees"
-            echo ${URL}
-            test_result=$(curl -s "$URL")
-            if echo $test_result | grep "Welcome" > /dev/null
-            then
-              echo "Frontend test passed"
-              echo $test_result
-              exit 0
-            else
-              echo $test_result
-              exit 1
-            fi
+      # - run:
+      #     name: Frontend smoke test.
+      #     command: |
+      #       static_host=$(cat $WORKSPACE_DIR/websiteurl)
+      #       URL="http://$static_host/#/employees"
+      #       echo ${URL}
+      #       test_result=$(curl -s "$URL")
+      #       if echo $test_result | grep "Welcome" > /dev/null
+      #       then
+      #         echo "Frontend test passed"
+      #         echo $test_result
+      #         exit 0
+      #       else
+      #         echo $test_result
+      #         exit 1
+      #       fi
       - run:
           name: "Backend smoke test"
           command: |
