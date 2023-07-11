@@ -382,7 +382,7 @@ jobs:
       - persist_to_workspace:
           root: /home/circleci/workspace
           paths: 
-            - "websiteurl"
+            - websiteurl
       # Rollback if fail
       - destroy_environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
@@ -447,13 +447,6 @@ jobs:
           args: ansible
       - attach_workspace:
           at: /home/circleci/workspace
-      - run:
-          name: Frontend smoke test.
-          command: |
-            ls $WORKSPACE_DIR
-            static_host=$(cat $WORKSPACE_DIR/websiteurl)
-            URL="http://$static_host/#/employees"
-            echo ${URL}
       - run:
           name: Run Playbook and Configure server
           command: |
