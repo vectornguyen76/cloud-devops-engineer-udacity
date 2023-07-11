@@ -69,7 +69,7 @@ commands:
             --parameter-overrides << parameters.parameter_overrides >> \
             --no-fail-on-empty-changeset \
             --region us-east-1 \
-            --tags Project="mlops-project" \
+            --tags Project="udacity-project" \
             --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM"
   destroy_environment:
     parameters:
@@ -658,7 +658,7 @@ jobs:
       - deploy_stack:
           stack_name: production-distro
           template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/cloudfront.yml
-          parameter_overrides: S3StaticHostUrl=$(cat $WORKSPACE_DIR/websiteurl)
+          parameter_overrides: S3StaticHostUrl=$CUR_SHORT_HASH
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH

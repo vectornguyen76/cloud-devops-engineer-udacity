@@ -20,7 +20,8 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Ref S3StaticHostUrl
+          - DomainName: !Sub "udapeople-frontend-${S3StaticHostUrl}.s3.amazonaws.com"
+          # - DomainName: !Ref S3StaticHostUrl
             Id: webpage
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
