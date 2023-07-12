@@ -6,7 +6,7 @@ This project will prove mastery of the following learning objectives:
 - Utilize a configuration management tool to accomplish deployment to cloud-based servers.
 - Surface critical server errors for diagnosis using centralized structured logging.
 
-![Diagram of CI/CD Pipeline we will be building.](./resource/cicd-pipeline.png)
+![Diagram of CI/CD Pipeline we will be building.](./resource/cicd-pipeline.jpg)
 
 ### Built With
 

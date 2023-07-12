@@ -656,7 +656,7 @@ jobs:
       - attach_workspace:
           at: /home/circleci/workspace
       - deploy_stack:
-          stack_name: InitialStack
+          stack_name: Udapeople-Cloudfront-$CUR_SHORT_HASH
           template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/cloudfront.yml
           parameter_overrides: S3StaticHostUrl="udapeople-frontend-$CUR_SHORT_HASH.s3.amazonaws.com"
       # Rollback if fail
@@ -692,7 +692,7 @@ jobs:
             )
             for stack in ${STACKS[@]}
             do
-              if [[ ! "$stack" =~ "$CUR_SHORT_HASH" ]] && [[ ! "$stack" =~ "Final-Project" ]]
+              if [[ ! "$stack" =~ "$CUR_SHORT_HASH" ]]
               then
                 if [[ "$stack" =~ "Frontend" ]]
                 then
