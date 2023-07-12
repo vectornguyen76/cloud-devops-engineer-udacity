@@ -708,8 +708,17 @@ jobs:
                   touch $WORKSPACE_DIR/destroybackendstack
                   echo $stack > $WORKSPACE_DIR/destroybackendstack
                 fi
+                if [[ "$stack" =~ "Cloudfront" ]]
+                then
+                  touch $WORKSPACE_DIR/destroycloudfrontstack
+                  echo $stack > $WORKSPACE_DIR/destroycloudfrontstack
+                fi
               fi
             done
+      # Remove the cloudfront infrastructure
+      - destroy_environment:
+          stack_name: $(eval cat $WORKSPACE_DIR/destroycloudfrontstack)
+          when: "always"
       # Remove the backend infrastructure
       - destroy_environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroybackendstack)
