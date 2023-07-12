@@ -1,0 +1,2 @@
+URL01: https://github.com/vectornguyen76/cloud-devops-engineer-udacity
+URL02: http://udapeople-frontend-cb35421.s3-website-us-east-1.amazonaws.com/#/employees
