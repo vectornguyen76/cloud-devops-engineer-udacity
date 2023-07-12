@@ -104,6 +104,10 @@ Resources:
           FromPort: 3030
           ToPort: 3030
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9100
+          ToPort: 9100
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: "-1"
           FromPort: -1
@@ -130,21 +134,6 @@ Resources:
       - DeviceName: "/dev/sdk"
         Ebs: 
           VolumeSize: 20
-      # UserData:   
-      #   Fn::Base64: !Sub |
-      #     #!/bin/bash
-      #     sudo apt-get update -y
-      #     sudo apt-get install ca-certificates curl gnupg
-      #     sudo install -m 0755 -d /etc/apt/keyrings
-      #     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-      #     sudo chmod a+r /etc/apt/keyrings/docker.gpg
-      #     echo \
-      #     "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-      #     "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-      #     sudo tee /etc/apt/sources.list.d/docker.list > /dev/null  
-      #     sudo apt-get update -y
-      #     apt-get install -y docker-ce
-      #     docker run -p 80:8080 tomcat:8.0  
       Tags:
         - Key: Name
           Value: ServerInstance
