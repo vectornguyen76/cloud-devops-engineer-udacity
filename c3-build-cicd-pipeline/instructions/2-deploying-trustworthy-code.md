@@ -77,3 +77,10 @@ When a build fails for any reason, the UdaPeople dev team needs to know about it
 - Alerts should include a summary of what happened and a link to the job console output for quick troubleshooting.
 - Provide a screenshot of an alert from one of your failed builds. **[SCREENSHOT04]**
 ![An alert when the build breaks.](screenshots/SCREENSHOT04.png)
+
+The steps for configurinig the Slack notification are:
+- [Setup Authentication](https://github.com/CircleCI-Public/slack-orb/wiki/Setup)
+- [Integrate Slack orb](https://circleci.com/developer/orbs/orb/circleci/slack)
+
+![Slack integration w/ CircleCI](screenshots/setup-slack.png)
+![Default Notification on Email](screenshots/slack.png)
