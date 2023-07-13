@@ -1,0 +1,43 @@
+Description: >
+  Cloudfront distribution for UdaPeople.
+
+Parameters:
+  S3StaticHostUrl:
+    Type: String
+    Description: "S3 static website endpoint"
+    Default: "s3-us-east-1.s3-website-us-east-1.amazonaws.com"
+
+Resources:
+  
+  CloudFrontOriginAccessIdentity:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Origin Access Identity for Serverless Static Website
+
+  WebpageCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Ref S3StaticHostUrl
+            Id: webpage
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
+        Enabled: True
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: False
+          TargetOriginId: webpage
+          ViewerProtocolPolicy: allow-all
+
+Outputs:
+  DomainName:
+    Description: "Cloud Front domain name"
+    Value:
+      Fn::GetAtt:
+        - WebpageCDN
+        - DomainName
+    Export:
+      Name: "DomainName"
