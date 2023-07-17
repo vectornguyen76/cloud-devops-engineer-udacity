@@ -25,6 +25,14 @@ This project will prove mastery of the following learning objectives:
 * [Configuration Management](instructions/3-configuration-management.md)
 * [Turn Errors into Sirens](instructions/4-turn-errors-into-sirens.md)
 
+### Results
+[Submission](submission)
+
+<p align="center">
+<img src="submission/screenshots/done-cicd-pipeline.jpg" alt="animated" />
+</p>
+<p align="center">Done CI/CD Pipeline</p>
+
 ### License
 
 [License](LICENSE.md)
