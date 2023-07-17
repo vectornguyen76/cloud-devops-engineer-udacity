@@ -44,11 +44,13 @@ jobs:
       - run:
           name: run tests
           command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/c4-microservice-aws-and-kubernetes/project-ml-microservice-kubernetes")
             . venv/bin/activate
             make test
       # run lints!
       - run:
           name: run lint
           command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/c4-microservice-aws-and-kubernetes/project-ml-microservice-kubernetes")
             . venv/bin/activate
             make lint
