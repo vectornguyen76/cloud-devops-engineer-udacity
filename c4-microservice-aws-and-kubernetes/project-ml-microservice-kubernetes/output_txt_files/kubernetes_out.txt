@@ -1,1 +1,22 @@
-<paste log output from Kubernetes-mediated prediction, here>
+deployment.apps/project-ml-kube created
+NAME                               READY   STATUS              RESTARTS   AGE
+project-ml-kube-6458c4d7b4-c88d9   0/1     ContainerCreating   0          44s
+error: unable to forward port because pod is not running. Current status=Pending
+
+Run again after the pod status is Running:
+error: failed to create deployment: deployments.apps "project-ml-kube" already exists
+NAME                               READY   STATUS    RESTARTS   AGE
+project-ml-kube-6458c4d7b4-c88d9   1/1     Running   0          3m28s
+
+Forwarding from 127.0.0.1:8000 -> 80
+Forwarding from [::1]:8000 -> 80
+Handling connection for 8000
+Handling connection for 8000
+
+make_prediction.sh run:
+Port: 8000
+{
+  "prediction": [
+    20.35373177134412
+  ]
+}
