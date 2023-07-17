@@ -94,7 +94,12 @@ Once your Docker image is publicly available, you can deploy it to the kubernete
     </p>
     <p align="center">View the output in your local browser at http://127.0.0.1:5000/</p>
 
-5. Delete the cluster
+5. Logging
+    ```
+    kubectl logs pod/python-helloworld-849d85c778-jrh6l
+    ```
+
+6. Delete the cluster
     You can delete the cluster either from the CloudFormation web-console, or by using the EKSCTL command. Choose any one option from below:
 
     - From the CloudFormation web-console, select your stack and choose delete from the actions menu
