@@ -4,15 +4,6 @@
 #
 version: 2
 
-commands:
-  # Reusable Job Code
-  export:
-    steps: 
-      - run:
-          name: "Export environment variable"
-          command: |
-            echo 'export PROJECT_ROOT_DIR="c4-microservice-aws-and-kubernetes/project-ml-microservice-kubernetes"' >> "$BASH_ENV"
-
 jobs:
   build:
     docker:
@@ -29,19 +20,18 @@ jobs:
 
     steps:
       - checkout
-      - export
 
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "$PROJECT_ROOT_DIR/requirements.txt" }}
+          - v1-dependencies-{{ checksum "c4-microservice-aws-and-kubernetes/project-ml-microservice-kubernetes/requirements.txt" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
       - run:
           name: install dependencies
           command: |
-            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/c4-microservice-aws-and-kubernetes/project-ml-microservice-kubernetes")
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
