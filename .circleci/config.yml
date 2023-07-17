@@ -28,8 +28,8 @@ jobs:
     working_directory: ~/repo
 
     steps:
-      - export
       - checkout
+      - export
 
       # Download and cache dependencies
       - restore_cache:
