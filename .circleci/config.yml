@@ -38,7 +38,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          key: v1-dependencies-{{ checksum "c4-microservice-aws-and-kubernetes/project-ml-microservice-kubernetes/requirements.txt" }}
         
       # run tests!
       - run:
