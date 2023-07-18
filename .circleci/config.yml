@@ -163,11 +163,11 @@ commands:
 # Define the jobs we want to run for this project
 jobs:
   build-app:
-    # executor: 
-    #   name: python/default
-    #   tag: "3.9.17"
-    docker:
-      - image: circleci/python:3.9.4
+    executor: 
+      name: python/default
+      tag: "3.9.17"
+    # docker:
+    #   - image: circleci/python:3.9.4
 
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
@@ -210,21 +210,32 @@ jobs:
             . venv/bin/activate
             python bentoml_model.py
 
+      # - run:
+      #     name: Build BentoML service
+      #     command: |
+      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+      #       . venv/bin/activate
+      #       bentoml build
+
+      # - run:
+      #     name: Export BentoML service
+      #     command: |
+      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+      #       . venv/bin/activate
+      #       bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+
+      #       ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+
       - run:
-          name: Build BentoML service
+          name: Import BentoML service
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
             . venv/bin/activate
-            bentoml build
+            bentoml import ./bentoml_service-oqlrrpbfhkrraaav.bento
 
-      - run:
-          name: Export BentoML service
-          command: |
-            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-            . venv/bin/activate
-            bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+            bentoml list
 
-            ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+            bentoml containerize bentoml_service:latest
 
       - run:
           name: Build app
