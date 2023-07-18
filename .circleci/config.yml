@@ -175,9 +175,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "capstone-project/requirements.txt" }}
+          - dependencies-{{ checksum "capstone-project/requirements.txt" }}
           # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+          - dependencies-
 
       - run:
           name: Install dependencies
@@ -191,7 +191,7 @@ jobs:
       - save_cache:
           paths:
             - $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/venv
-          key: v1-dependencies-{{ checksum "capstone-project/requirements.txt" }}
+          key: dependencies-{{ checksum "capstone-project/requirements.txt" }}
 
       - run:
           name: Run lint
@@ -207,21 +207,21 @@ jobs:
             . venv/bin/activate
             python bentoml_model.py
 
-      # - run:
-      #     name: Build BentoML service
-      #     command: |
-      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-      #       . venv/bin/activate
-      #       bentoml build
+      - run:
+          name: Build BentoML service
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+            . venv/bin/activate
+            bentoml build
 
-      # - run:
-      #     name: Export BentoML service
-      #     command: |
-      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-      #       . venv/bin/activate
-      #       bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+      - run:
+          name: Export BentoML service
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+            . venv/bin/activate
+            bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
 
-      #       ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+            ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
 
       - run:
           name: Build app
@@ -245,7 +245,6 @@ jobs:
   build-and-push:
     # Use the Docker orb in the context of this job
     docker:
-      # - image: docker:19.03.13-git
       - image: docker:17.05.0-ce-git
     environment:
       # Set the DOCKERHUB_USERNAME environment variable for pushing the image to Docker Hub
