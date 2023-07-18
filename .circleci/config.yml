@@ -190,7 +190,7 @@ jobs:
 
       - save_cache:
           paths:
-            - ./venv
+            - $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/venv
           key: v1-dependencies-{{ checksum "capstone-project/requirements.txt" }}
 
       - run:
@@ -207,21 +207,21 @@ jobs:
             . venv/bin/activate
             python bentoml_model.py
 
-      - run:
-          name: Build BentoML service
-          command: |
-            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-            . venv/bin/activate
-            bentoml build
+      # - run:
+      #     name: Build BentoML service
+      #     command: |
+      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+      #       . venv/bin/activate
+      #       bentoml build
 
-      - run:
-          name: Export BentoML service
-          command: |
-            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-            . venv/bin/activate
-            bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+      # - run:
+      #     name: Export BentoML service
+      #     command: |
+      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+      #       . venv/bin/activate
+      #       bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
 
-            ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+      #       ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
 
       - run:
           name: Build app
@@ -233,7 +233,7 @@ jobs:
 
             # no error if existing, make parent directories as needed
             mkdir --parents $WORKSPACE_DIR
-            
+
             # Move the compressed file to workspace folder
             mv artifact-app.tar.gz $WORKSPACE_DIR/artifact-app.tar.gz
 
