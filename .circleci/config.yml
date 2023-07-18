@@ -172,6 +172,13 @@ jobs:
       # Export environment variable
       - export
 
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "$PROJECT_ROOT_DIR/requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
       - run:
           name: Install dependencies
           command: |
@@ -181,12 +188,33 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt
 
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "$PROJECT_ROOT_DIR/requirements.txt" }}
+
       - run:
           name: Run lint
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
             . venv/bin/activate
             pylint service.py --disable=R,C,W1203,W1202,unsubscriptable-object,no-name-in-module  
+
+      - run:
+          name: Build BentoML service
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+            . venv/bin/activate
+            bentoml build
+
+      - run:
+          name: Export BentoML service
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+            . venv/bin/activate
+            bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
+
+            ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
 
       - run:
           name: Build app
