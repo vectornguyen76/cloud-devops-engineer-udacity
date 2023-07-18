@@ -175,7 +175,7 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "$PROJECT_ROOT_DIR/requirements.txt" }}
+          - v1-dependencies-{{ checksum "capstone-project/requirements.txt" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
@@ -191,7 +191,7 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "$PROJECT_ROOT_DIR/requirements.txt" }}
+          key: v1-dependencies-{{ checksum "capstone-project/requirements.txt" }}
 
       - run:
           name: Run lint
@@ -199,6 +199,13 @@ jobs:
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
             . venv/bin/activate
             pylint service.py --disable=R,C,W1203,W1202,unsubscriptable-object,no-name-in-module  
+
+      - run:
+          name: Convert to bentoml model
+          command: |
+            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+            . venv/bin/activate
+            python bentoml_model.py
 
       - run:
           name: Build BentoML service
@@ -220,13 +227,16 @@ jobs:
           name: Build app
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY")
-            cd ..
+
             # Compress the data and deployment folder
-            tar -C project -czvf artifact-app.tar.gz .
+            tar -C capstone-project -czvf artifact-app.tar.gz .
+
             # no error if existing, make parent directories as needed
             mkdir --parents $WORKSPACE_DIR
+            
             # Move the compressed file to workspace folder
             mv artifact-app.tar.gz $WORKSPACE_DIR/artifact-app.tar.gz
+
       - persist_to_workspace:
           root: /home/circleci/workspace
           paths:
