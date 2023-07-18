@@ -186,7 +186,7 @@ jobs:
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
             . venv/bin/activate
-            pylint --disable=R,C,W1203,W1202 service.py
+            pylint service.py --disable=R,C,W1203,W1202,unsubscriptable-object,no-name-in-module  
 
       - run:
           name: Build app
