@@ -4,17 +4,6 @@ labels:
   project: mlops
 include:
 - "*.py"
-- "prob1"
-- "prob2"
+- "model"
 python:
-  packages:
-    - lightgbm==3.3.5
-    - numpy==1.23.5
-    - onnxruntime==1.15.0
-    - pandas==1.5.3
-    - pydantic==1.10.7
-    - PyYAML==6.0
-    - scikit_learn==1.2.2
-    - scikit-learn
-    - bentoml>=1.0.0
-    - onnx
+  requirements_txt: "./requirements.txt"

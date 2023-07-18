@@ -1,7 +1,7 @@
-data_path = "./phase-1/prob-1/raw_train.parquet"
-model_path = "./prob1/prob_1_model.pkl"
-onnx_path = "./prob1/prob_1_onnx_model.onnx"
-category_index_path = "./prob1/prob_1_category_index_path.pkl"
+data_path = "./data/prob_1/raw_train.parquet"
+model_path = "./model/prob_1/prob_1_model.pkl"
+onnx_path = "./model/prob_1/prob_1_onnx_model.onnx"
+category_index_path = "./model/prob_1/prob_1_category_index_path.pkl"
 feature_config = {
     "numeric_columns": [
         "feature3",
