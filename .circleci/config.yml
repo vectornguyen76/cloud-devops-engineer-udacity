@@ -231,7 +231,7 @@ jobs:
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
             . venv/bin/activate
-            bentoml import ./bentoml_service-oqlrrpbfhkrraaav.bento
+            bentoml import ./bentoml_service/bentoml_service-oqlrrpbfhkrraaav.bento
 
             bentoml list
 
