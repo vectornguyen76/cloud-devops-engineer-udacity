@@ -163,9 +163,12 @@ commands:
 # Define the jobs we want to run for this project
 jobs:
   build-app:
-    executor: 
-      name: python/default
-      tag: "3.9.17"
+    # executor: 
+    #   name: python/default
+    #   tag: "3.9.17"
+    docker:
+      - image: circleci/python:3.9.17
+
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
