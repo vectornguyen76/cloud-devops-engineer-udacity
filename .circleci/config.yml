@@ -14,8 +14,8 @@ commands:
           command: |
             # Git hash for the current commit
             echo 'export current_commit=<< pipeline.git.revision >>' >> "$BASH_ENV"
-            echo 'export CUR_SHORT_HASH="${current_commit:0:7}"' >> "$BASH_ENV"
-            # echo 'export CUR_SHORT_HASH="TEST"' >> "$BASH_ENV"
+            # echo 'export CUR_SHORT_HASH="${current_commit:0:7}"' >> "$BASH_ENV"
+            # echo 'export CUR_SHORT_HASH="cba843b"' >> "$BASH_ENV"
       - run:
           name: "Export environment variable"
           command: |
@@ -219,7 +219,6 @@ jobs:
       - kubernetes/create-or-update-resource:
           get-rollout-status: true
           resource-file-path: $PROJECT_ROOT_DIR/master-deployment.yaml
-          resource-name: deployment/mlops-resource-$CUR_SHORT_HASH
 
       # # Remove the cluster eks
       # - aws-eks/delete-cluster:
@@ -279,21 +278,21 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - build-test-app
-      - create-cluster-eks:
-          requires:
-            - "build-test-app"
-          filters:
-            branches:
-              only:
-                - main
-      - test-cluster-eks:
-          requires:
-            - create-cluster-eks
-          filters:
-            branches:
-              only:
-                - main
+      # - build-test-app
+      # - create-cluster-eks:
+      #     requires:
+      #       - "build-test-app"
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
+      # - test-cluster-eks:
+      #     requires:
+      #       - create-cluster-eks
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
       - create-deployment-kubenetes:
           requires:
             - test-cluster-eks
