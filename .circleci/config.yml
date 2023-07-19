@@ -212,7 +212,7 @@ jobs:
           install-kubectl: true
       - kubernetes/create-or-update-resource:
           get-rollout-status: true
-          resource-file-path: $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/master-deployment.yaml
+          resource-file-path: $PROJECT_ROOT_DIR/master-deployment.yaml
           resource-name: mlops-resource-$CUR_SHORT_HASH
 
       # # Remove the cluster eks
@@ -228,8 +228,6 @@ jobs:
       - export
       # Set up AWS Credentials
       - aws-cli/setup
-      - attach_workspace:
-          at: /home/circleci/workspace
       - run:
           name: "Fetch stacks and save the old stack name"
           command: |
