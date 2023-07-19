@@ -53,7 +53,7 @@ commands:
             else
               aws cloudformation delete-stack --stack-name << parameters.stack_name >>
               echo $stack_info
-              aws cloudformation wait stack-delete-complete --stack-name $stack_info
+              aws cloudformation wait stack-delete-complete --stack-name << parameters.stack_name >>
               if [ "<< parameters.when >>" = "on_fail" ]
               then
                 echo "Roll back completed. Green environment destroyed."
@@ -290,31 +290,31 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      - build-test-app
-      - create-cluster-eks:
-          requires:
-            - "build-test-app"
-          filters:
-            branches:
-              only:
-                - main
-      - test-cluster-eks:
-          requires:
-            - create-cluster-eks
-          filters:
-            branches:
-              only:
-                - main
-      - create-deployment-kubenetes:
-          requires:
-            - test-cluster-eks
-          filters:
-            branches:
-              only:
-                - main
+      # - build-test-app
+      # - create-cluster-eks:
+      #     requires:
+      #       - "build-test-app"
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
+      # - test-cluster-eks:
+      #     requires:
+      #       - create-cluster-eks
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
+      # - create-deployment-kubenetes:
+      #     requires:
+      #       - test-cluster-eks
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
       - clean-up:
-          requires:
-            - create-deployment-kubenetes
+          # requires:
+          #   - create-deployment-kubenetes
           filters:
             branches:
               only:
