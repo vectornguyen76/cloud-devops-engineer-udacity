@@ -15,7 +15,7 @@ commands:
             # Git hash for the current commit
             echo 'export current_commit=<< pipeline.git.revision >>' >> "$BASH_ENV"
             # echo 'export CUR_SHORT_HASH="${current_commit:0:7}"' >> "$BASH_ENV"
-            # echo 'export CUR_SHORT_HASH="cba843b"' >> "$BASH_ENV"
+            echo 'export CUR_SHORT_HASH="cba843b"' >> "$BASH_ENV"
       - run:
           name: "Export environment variable"
           command: |
