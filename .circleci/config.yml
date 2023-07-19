@@ -304,7 +304,16 @@ jobs:
             tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
 
             sudo mv /tmp/eksctl /usr/local/bin
+      - run:
+          name: Create Cluster
+          command: |
+            eksctl create cluster --name eksctl-demo --region=us-east-1
 
+      - run:
+          name: View details
+          command: |
+            eksctl get cluster --name=eksctl-demo --region=us-east-1
+            
       - run:
           name: Install kubectl
           command: |
@@ -324,15 +333,7 @@ jobs:
 
             kubectl version --client
 
-      - run:
-          name: Create Cluster
-          command: |
-            eksctl create cluster --name eksctl-demo --region=us-east-1
 
-      - run:
-          name: View details
-          command: |
-            eksctl get cluster --name=eksctl-demo --region=us-east-1
 
 # Sequential workflow
 workflows:
