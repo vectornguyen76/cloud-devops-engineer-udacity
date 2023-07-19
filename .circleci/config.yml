@@ -277,11 +277,11 @@ jobs:
               fi
             done
 
-      # Remove the backend infrastructure
+      # Remove the cluster nodegroup infrastructure
       - destroy_environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroy_cluster_nodegroup_stack)
           when: "always"
-      # Remove the frontend infrastructure
+      # Remove the cluster infrastructure
       - destroy_environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroy_cluster_stack)
           when: "always"
@@ -290,31 +290,31 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      # - build-test-app
-      # - create-cluster-eks:
-      #     requires:
-      #       - "build-test-app"
-      #     filters:
-      #       branches:
-      #         only:
-      #           - main
-      # - test-cluster-eks:
-      #     requires:
-      #       - create-cluster-eks
-      #     filters:
-      #       branches:
-      #         only:
-      #           - main
-      # - create-deployment-kubenetes:
-      #     requires:
-      #       - test-cluster-eks
-      #     filters:
-      #       branches:
-      #         only:
-      #           - main
+      - build-test-app
+      - create-cluster-eks:
+          requires:
+            - "build-test-app"
+          filters:
+            branches:
+              only:
+                - main
+      - test-cluster-eks:
+          requires:
+            - create-cluster-eks
+          filters:
+            branches:
+              only:
+                - main
+      - create-deployment-kubenetes:
+          requires:
+            - test-cluster-eks
+          filters:
+            branches:
+              only:
+                - main
       - clean-up:
-          # requires:
-          #   - create-deployment-kubenetes
+          requires:
+            - create-deployment-kubenetes
           filters:
             branches:
               only:
