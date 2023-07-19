@@ -26,24 +26,6 @@ commands:
   
 # Define the jobs we want to run for this project
 jobs:
-  test-cluster:
-    docker:
-      - image: cimg/python:3.10
-    parameters:
-      cluster-name:
-        description: |
-          Name of the EKS cluster
-        type: string
-    steps:
-      - kubernetes/install:
-          kubectl-version: v1.22.0
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
-      - run:
-          command: |
-            kubectl get services
-          name: Test cluster
-
   build-test-app:
     executor: 
       name: python/default
@@ -160,73 +142,96 @@ jobs:
       #     paths:
       #       - "artifact-app.tar.gz"
 
-  # Infrastructure Creation
-  create-infrastructure: 
-    executor: aws-cli/default
+  create-cluster-eks:
+    docker:
+      - image: cimg/python:3.10
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
     steps:
-      # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
-      # Export environment variable
-      - export
-      # Set up AWS Credentials
-      - aws-cli/setup
-      - kubernetes/install-kubectl
+      - kubernetes/install:
+          kubectl-version: v1.22.0
+      - aws-eks/create-cluster:
+          cluster-name: << parameters.cluster-name >>
+          zones: "us-east-1a,us-east-1b"
+          node-type: "t3.medium"
+
+  test-cluster:
+    docker:
+      - image: cimg/python:3.10
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+    steps:
+      - kubernetes/install:
+          kubectl-version: v1.22.0
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
       - run:
-          name: Install eksctl
           command: |
-            # for ARM systems, set ARCH to: `arm64`, `armv6` or `armv7`
-            ARCH=amd64
-            PLATFORM=$(uname -s)_$ARCH
+            kubectl get services
+          name: Test cluster
 
-            curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
-
-            # (Optional) Verify checksum
-            curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
-
-            tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
-
-            sudo mv /tmp/eksctl /usr/local/bin
-
-      - run:
-          name: Check version kubectl
-          command: |
-            kubectl version --client
-
-      - run:
-          name: Create Cluster
-          command: |
-            eksctl create cluster --name eksctl-demo --region=us-east-1 --zones us-east-1a,us-east-1b
-
-      - run:
-          name: View details
-          command: |
-            eksctl get cluster --name=eksctl-demo --region=us-east-1
-
-
-
-
-
+  create-deployment:
+    docker:
+      - image: cimg/python:3.10
+    parameters:
+      cluster-name:
+        description: |
+          Name of the EKS cluster
+        type: string
+    steps:
+      - checkout
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: << parameters.cluster-name >>
+          install-kubectl: true
+      - kubernetes/create-or-update-resource:
+          get-rollout-status: true
+          resource-file-path: tests/nginx-deployment/deployment.yaml
+          resource-name: deployment/nginx-deployment
+          
 # Sequential workflow
 workflows:
   # Name the workflow
   my_workflow:
     jobs:
-      - aws-eks/create-cluster:
-          cluster-name: my-eks-demo
-      - test-cluster:
-          cluster-name: my-eks-demo
-          requires:
-            - aws-eks/create-cluster
-      - aws-eks/delete-cluster:
-          cluster-name: my-eks-demo
-          requires:
-            - test-cluster
-
       - build-test-app
-      - create-infrastructure:
+      - create-cluster-eks:
+          cluster-name: eks-mlops-project
           requires:
             - "build-test-app"
           filters:
             branches:
               only:
                 - main
+      - test-cluster:
+          cluster-name: eks-mlops-project
+          requires:
+            - create-cluster-eks
+      - create-deployment:
+          cluster-name: eks-mlops-project
+          requires:
+            - test-cluster
+      - aws-eks/update-container-image:
+          cluster-name: eks-mlops-project
+          container-image-updates: nginx=nginx:1.9.1
+          post-steps:
+            - kubernetes/delete-resource:
+                resource-names: nginx-deployment
+                resource-types: deployment
+                wait: true
+          requires:
+            - create-deployment
+          resource-name: deployment/nginx-deployment
+
+
+
+      - aws-eks/delete-cluster:
+          cluster-name: eks-mlops-project
+          requires:
+            - aws-eks/update-container-image
