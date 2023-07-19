@@ -174,7 +174,13 @@ jobs:
           cluster-name: mlops-cluster-$CUR_SHORT_HASH
           zones: "us-east-1a,us-east-1b"
           node-type: "t3.medium"
-          nodes: 3
+          nodegroup-name: "node-eks"
+          node-volume-size: 15
+          nodes-max: 3
+          nodes: 2
+          nodes-min: 1
+          tags: "Owner=Vector"
+          show-eksctl-command: true
 
       # # Remove the cluster eks
       # - aws-eks/delete-cluster:
@@ -186,7 +192,6 @@ jobs:
     steps:
       # Export environment variable
       - export
-      
       - kubernetes/install:
           kubectl-version: v1.22.0
       - aws-eks/update-kubeconfig-with-authenticator:
