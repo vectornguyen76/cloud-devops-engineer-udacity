@@ -31,9 +31,9 @@ spec:
       containers:
         - name: bentoml-service-container
           image: vectornguyen76/bentoml_service:latest
-          env:
-            - name: BENTOML_CONFIG
-              value: "/home/bentoml/configuration.yml"
+          # env:
+          #   - name: BENTOML_CONFIG
+          #     value: "/home/bentoml/configuration.yml"
           ports:
             - containerPort: 3000   # The port inside the container want to open
-          command: ["serve"]
+          command: ["bentoml", "serve"]
