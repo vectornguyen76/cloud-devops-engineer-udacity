@@ -23,7 +23,7 @@ commands:
             echo 'export PROJECT_ROOT_DIR="capstone-project"' >> "$BASH_ENV"
             echo 'export TEMPLATE_ROOT_DIR=".circleci/files"' >> "$BASH_ENV"
             echo 'export PROJECT_TAG="mlops-capstone-project"' >> "$BASH_ENV"
-  
+
 # Define the jobs we want to run for this project
 jobs:
   build-test-app:
@@ -123,62 +123,43 @@ jobs:
           command: |
             docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
 
-      # - run:
-      #     name: Build app
-      #     command: |
-      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY")
-
-      #       # Compress the data and deployment folder
-      #       tar -C capstone-project -czvf artifact-app.tar.gz .
-
-      #       # no error if existing, make parent directories as needed
-      #       mkdir --parents $WORKSPACE_DIR
-
-      #       # Move the compressed file to workspace folder
-      #       mv artifact-app.tar.gz $WORKSPACE_DIR/artifact-app.tar.gz
-
-      # - persist_to_workspace:
-      #     root: /home/circleci/workspace
-      #     paths:
-      #       - "artifact-app.tar.gz"
-
   create-cluster-eks:
     docker:
       - image: cimg/python:3.10
-    parameters:
-      cluster-name:
-        description: |
-          Name of the EKS cluster
-        type: string
     steps:
       - checkout
       - kubernetes/install:
           kubectl-version: v1.22.0
       - aws-eks/create-cluster:
-          cluster-name: << parameters.cluster-name >>
+          cluster-name: mlops-cluster-$CUR_SHORT_HASH
           zones: "us-east-1a,us-east-1b"
           node-type: "t3.medium"
           nodes: 3
 
-  test-cluster:
+      # Remove the cluster eks
+      - aws-eks/delete-cluster:
+          cluster-name: mlops-cluster-$CUR_SHORT_HASH
+          when: "on_fail"
+
+  test-cluster-eks:
     docker:
       - image: cimg/python:3.10
-    parameters:
-      cluster-name:
-        description: |
-          Name of the EKS cluster
-        type: string
     steps:
       - kubernetes/install:
           kubectl-version: v1.22.0
       - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
+          cluster-name: mlops-cluster-$CUR_SHORT_HASH
       - run:
           command: |
             kubectl get services
           name: Test cluster
 
-  create-deployment:
+      # Remove the cluster eks
+      - aws-eks/delete-cluster:
+          cluster-name: mlops-cluster-$CUR_SHORT_HASH
+          when: "on_fail"
+
+  create-deployment-kubenetes:
     docker:
       - image: cimg/python:3.10
     parameters:
@@ -189,50 +170,60 @@ jobs:
     steps:
       - checkout
       - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
+          cluster-name: mlops-cluster-$CUR_SHORT_HASH
           install-kubectl: true
       - kubernetes/create-or-update-resource:
           get-rollout-status: true
           resource-file-path: $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/master-deployment.yaml
-          resource-name: deployment/mlops-deployment
-          
+          resource-name: mlops-resource-$CUR_SHORT_HASH
+
+      # Remove the cluster eks
+      - aws-eks/delete-cluster:
+          cluster-name: mlops-cluster-$CUR_SHORT_HASH
+          when: "on_fail"
+
+  clean-up:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - kubernetes/install:
+          kubectl-version: v1.22.0
+
+      # Remove the cluster eks
+      - aws-eks/delete-cluster:
+          cluster-name: mlops-cluster-$CUR_SHORT_HASH
+          when: "always"
+
 # Sequential workflow
 workflows:
-  # Name the workflow
   my_workflow:
     jobs:
       - build-test-app
       - create-cluster-eks:
-          cluster-name: eks-mlops-project
           requires:
             - "build-test-app"
           filters:
             branches:
               only:
                 - main
-      - test-cluster:
-          cluster-name: eks-mlops-project
+      - test-cluster-eks:
           requires:
             - create-cluster-eks
-      - create-deployment:
-          cluster-name: eks-mlops-project
+          filters:
+            branches:
+              only:
+                - main
+      - create-deployment-kubenetes:
           requires:
-            - test-cluster
-      # - aws-eks/update-container-image:
-      #     cluster-name: eks-mlops-project
-      #     container-image-updates: nginx=nginx:1.9.1
-      #     post-steps:
-      #       - kubernetes/delete-resource:
-      #           resource-names: nginx-deployment
-      #           resource-types: deployment
-      #           wait: true
-      #     requires:
-      #       - create-deployment
-      #     resource-name: deployment/nginx-deployment
-
-
-
-      # - aws-eks/delete-cluster:
-      #     cluster-name: eks-mlops-project
-      #     requires:
-      #       - aws-eks/update-container-image
+            - test-cluster-eks
+          filters:
+            branches:
+              only:
+                - main
+      - clean-up:
+          requires:
+            - create-deployment-kubenetes
+          filters:
+            branches:
+              only:
+                - main
