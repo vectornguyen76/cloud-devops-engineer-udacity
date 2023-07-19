@@ -5,6 +5,7 @@ metadata:
 spec:
   selector:
     app: mlops-app
+    tier: mlops
   ports:
     - protocol: 'TCP'
       port: 80   # The port exposed on the Service
@@ -20,10 +21,12 @@ spec:
   selector:
     matchLabels:
       app: mlops-app
+      tier: mlops
   template:
     metadata:
       labels:
         app: mlops-app
+        tier: mlops
     spec:
       containers:
         - name: bentoml-service-container
