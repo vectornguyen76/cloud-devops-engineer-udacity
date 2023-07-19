@@ -9,7 +9,7 @@ commands:
   export:
     steps: 
       - run:
-          name: "Get git commit short-hash for the current and the previous commit"
+          name: "Get git commit short-hash for the current"
           command: |
             # Git hash for the current commit
             echo 'export current_commit=<< pipeline.git.revision >>' >> "$BASH_ENV"
@@ -305,6 +305,26 @@ jobs:
             tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
 
             sudo mv /tmp/eksctl /usr/local/bin
+
+      - run:
+          name: Install kubectl
+          command: |
+            # curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+
+            # curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl.sha256"
+            
+            # echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+
+            # echo "Install kubectl"
+
+            # chmod +x kubectl
+            # sudo mkdir -p /usr/local/bin/kubectl
+            # sudo mv ./kubectl /usr/local/bin/kubectl
+
+            # # sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+            kubectl version --client
+
       - run:
           name: Create Cluster
           command: |
@@ -315,24 +335,7 @@ jobs:
           command: |
             eksctl get cluster --name=eksctl-demo --region=us-east-1
 
-      - run:
-          name: Install kubectl
-          command: |
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
 
-            curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl.sha256"
-            
-            echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-
-            echo "Install kubectl"
-
-            chmod +x kubectl
-            sudo mkdir -p /usr/local/bin/kubectl
-            sudo mv ./kubectl /usr/local/bin/kubectl
-
-            # sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-            kubectl version --client
 
 
 
