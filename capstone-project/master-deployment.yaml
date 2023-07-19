@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlops
+spec:
+  selector:
+    app: mlops-app
+    tier: mlops
+  ports:
+    - protocol: 'TCP'
+      port: 80   # The port exposed on the Service
+      targetPort: 3000   # The port inside the container
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlops-app-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlops-app
+      tier: mlops
+  template:
+    metadata:
+      labels:
+        app: mlops-app
+        tier: mlops
+    spec:
+      containers:
+        - name: bentoml_service
+          image: vectornguyen76/bentoml_service:latest
+          env:
+            - name: BENTOML_CONFIG
+              value: /home/bentoml/configuration.yml
+          ports:
+            - containerPort: 3000   # The port inside the container that I want to open
+          command: ["serve"]

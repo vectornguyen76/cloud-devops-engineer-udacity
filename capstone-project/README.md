@@ -64,3 +64,7 @@ In this project, I will apply the skills and knowledge which were developed thro
     ```
     docker run -it --rm -p 3000:3000 bentoml_service:oqlrrpbfhkrraaav serve
     ```
+
+# Reference 
+- https://circleci.com/developer/orbs/orb/circleci/aws-eks
+- https://circleci.com/developer/orbs/orb/circleci/kubernetes

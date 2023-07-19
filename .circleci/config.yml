@@ -158,6 +158,7 @@ jobs:
           cluster-name: << parameters.cluster-name >>
           zones: "us-east-1a,us-east-1b"
           node-type: "t3.medium"
+          nodes: 3
 
   test-cluster:
     docker:
@@ -192,8 +193,8 @@ jobs:
           install-kubectl: true
       - kubernetes/create-or-update-resource:
           get-rollout-status: true
-          resource-file-path: tests/nginx-deployment/deployment.yaml
-          resource-name: deployment/nginx-deployment
+          resource-file-path: $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/master-deployment.yaml
+          resource-name: deployment/mlops-deployment
           
 # Sequential workflow
 workflows:
@@ -217,21 +218,21 @@ workflows:
           cluster-name: eks-mlops-project
           requires:
             - test-cluster
-      - aws-eks/update-container-image:
-          cluster-name: eks-mlops-project
-          container-image-updates: nginx=nginx:1.9.1
-          post-steps:
-            - kubernetes/delete-resource:
-                resource-names: nginx-deployment
-                resource-types: deployment
-                wait: true
-          requires:
-            - create-deployment
-          resource-name: deployment/nginx-deployment
+      # - aws-eks/update-container-image:
+      #     cluster-name: eks-mlops-project
+      #     container-image-updates: nginx=nginx:1.9.1
+      #     post-steps:
+      #       - kubernetes/delete-resource:
+      #           resource-names: nginx-deployment
+      #           resource-types: deployment
+      #           wait: true
+      #     requires:
+      #       - create-deployment
+      #     resource-name: deployment/nginx-deployment
 
 
 
-      - aws-eks/delete-cluster:
-          cluster-name: eks-mlops-project
-          requires:
-            - aws-eks/update-container-image
+      # - aws-eks/delete-cluster:
+      #     cluster-name: eks-mlops-project
+      #     requires:
+      #       - aws-eks/update-container-image
