@@ -45,6 +45,17 @@ In this project, I will apply the skills and knowledge which were developed thro
     bentoml import ./bentoml_service-oqlrrpbfhkrraaav.bento
     ```
 
+# Deploy to kubernetes in local
+minikube start --driver=docker
+
+kubectl get nodes
+
+kubectl apply -f=master-deployment.yaml
+
+minikube dashboard
+
+minikube service mlops
+
 ### Development
 1. Build BentoML service
     ```
