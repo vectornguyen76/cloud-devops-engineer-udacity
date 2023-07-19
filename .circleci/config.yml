@@ -259,68 +259,24 @@ jobs:
           command: |
             docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
 
-      - run:
-          name: Build app
-          command: |
-            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY")
+      # - run:
+      #     name: Build app
+      #     command: |
+      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY")
 
-            # Compress the data and deployment folder
-            tar -C capstone-project -czvf artifact-app.tar.gz .
+      #       # Compress the data and deployment folder
+      #       tar -C capstone-project -czvf artifact-app.tar.gz .
 
-            # no error if existing, make parent directories as needed
-            mkdir --parents $WORKSPACE_DIR
+      #       # no error if existing, make parent directories as needed
+      #       mkdir --parents $WORKSPACE_DIR
 
-            # Move the compressed file to workspace folder
-            mv artifact-app.tar.gz $WORKSPACE_DIR/artifact-app.tar.gz
+      #       # Move the compressed file to workspace folder
+      #       mv artifact-app.tar.gz $WORKSPACE_DIR/artifact-app.tar.gz
 
-      - persist_to_workspace:
-          root: /home/circleci/workspace
-          paths:
-            - "artifact-app.tar.gz"
-
-  push-docker-hub:
-    # Use the Docker orb in the context of this job
-    docker:
-      - image: docker:17.05.0-ce-git
-    environment:
-      # Set the DOCKERHUB_USERNAME environment variable for pushing the image to Docker Hub
-      DOCKERHUB_USERNAME: vectornguyen76
-      IMAGE_NAME: vectornguyen76/model_predictor
-      IMAGE_TAG: latest
-      MODEL_PROB1_CONFIG_PATH: data/model_config/phase-1/prob-1/model-1.yml  
-      MODEL_PROB2_CONFIG_PATH: data/model_config/phase-1/prob-2/model-1.yml
-      PORT: 5040
-    steps:
-      - checkout
-      - setup_remote_docker # Configure the Docker CLI
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --no-cache py-pip=9.0.0-r1
-            pip install docker-compose==1.12.0
-      - run:
-          name: Build mlflow
-          command: |
-            # Build the Docker image using the Dockerfile in the current directory
-            docker-compose -f deployment/mlflow/docker-compose.yml build
-            # docker build -t ${DOCKERHUB_USERNAME}/my-image:${CIRCLE_SHA1} .
-      - run:
-          name: Build predictor
-          command: |
-            # Build the Docker image using the Dockerfile in the current directory
-            docker build -f deployment/model_predictor/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
-
-      - run:
-          name: Login to Docker Hub
-          command: |
-            # Log in to Docker Hub
-            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-            
-      - run:
-          name: Push the predictor to Docker Hub
-          command: |
-            # Push the image to Docker Hub
-            docker push $IMAGE_NAME:$IMAGE_TAG
+      # - persist_to_workspace:
+      #     root: /home/circleci/workspace
+      #     paths:
+      #       - "artifact-app.tar.gz"
 
   # Infrastructure Creation
   create-infrastructure: 
@@ -332,71 +288,22 @@ jobs:
       - export
       # Set up AWS Credentials
       - aws-cli/setup
-      # All infrastructure does not cost money so don't need to remove when fail
-      # Create networking
-      - deploy_stack:
-          stack_name: EC2-$CUR_SHORT_HASH
-          template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2.yml
-          parameter_overrides: file://$CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/ec2-parameters.json
-      - run:
-          name: "Get backend URL"
-          command: |
-            # no error if existing, make parent directories as needed
-            mkdir --parents $WORKSPACE_DIR
-            touch $WORKSPACE_DIR/server_public_dns
-            # Get name stack
-            ec2_public_dns=EC2-$CUR_SHORT_HASH-PublicDNS
-            # Pull the export value
-            host=$(aws cloudformation list-exports \
-            --query "Exports[?Name==\`$ec2_public_dns\`].Value" \
-            --no-paginate --output text)
-            # Append the DNS to the inventory file
-            echo $host >> $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/inventory.txt")
-            # Move to workspace
-            mv $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/inventory.txt $WORKSPACE_DIR/inventory.txt")
-            # Setup API_URL for frontend to use
-            API_URL="http://${host}:5000"
-            echo "${API_URL}"
-            # Store in workspace
-            echo $API_URL > $WORKSPACE_DIR/server_public_dns
-      - persist_to_workspace:
-          root: /home/circleci/workspace
-          paths:
-            - "inventory.txt"
-            - "server_public_dns"
-      # Rollback if fail
-      - destroy_environment:
-          stack_name: EC2-$CUR_SHORT_HASH
 
-  deploy-app:
-    executor: 
-      name: python/default
-      tag: "3.11.2"
-    steps:
-      # This command will pull all of the files into a directory called project which can be found at ~/project.
-      - checkout
-      # Export environment variable
-      - export
-      - add_ssh_keys:
-          fingerprints: ["61:22:79:6b:8b:79:4e:87:e1:ae:71:57:02:9d:1a:f2"]
-      - python/install-packages:
-          args: ansible
-      - attach_workspace:
-          at: /home/circleci/workspace
       - run:
-          name: Deploy app
+          name: Create cluster in eks
           command: |
-            # Move the compressed file to ansible folder
-            # no error if existing, make parent directories as needed
-            mkdir --parents $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/roles/deploy/files")
-            mv $WORKSPACE_DIR/artifact-app.tar.gz $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/roles/deploy/files/artifact-app.tar.gz")
-      - run:
-          name: "Ansible play book for deploy app"
-          command: |
-            ansible-playbook -i $WORKSPACE_DIR/inventory.txt $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/deploy-app.yml")
-      # Rollback if fail
-      - destroy_environment:
-          stack_name: EC2-$CUR_SHORT_HASH
+            # for ARM systems, set ARCH to: `arm64`, `armv6` or `armv7`
+            ARCH=amd64
+            PLATFORM=$(uname -s)_$ARCH
+
+            curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
+
+            # (Optional) Verify checksum
+            curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
+
+            tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
+
+            sudo mv /tmp/eksctl /usr/local/bin
 
 # Sequential workflow
 workflows:
@@ -404,23 +311,9 @@ workflows:
   my_workflow:
     jobs:
       - build-test-app
-      - push-docker-hub:
-          requires:
-            - "build-test-app"
-          filters:
-            branches:
-              only:
-                - main
       - create-infrastructure:
           requires:
-            - "push-docker-hub"
-          filters:
-            branches:
-              only:
-                - main
-      - deploy-app:
-          requires:
-            - "create-infrastructure"
+            - "build-test-app"
           filters:
             branches:
               only:
