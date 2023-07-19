@@ -317,8 +317,8 @@ jobs:
             echo "Install kubectl"
 
             chmod +x kubectl
-            mkdir -p /usr/local/bin/kubectl
-            mv ./kubectl /usr/local/bin/kubectl
+            sudo mkdir -p /usr/local/bin/kubectl
+            sudo mv ./kubectl /usr/local/bin/kubectl
 
             # sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
