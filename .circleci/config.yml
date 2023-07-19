@@ -223,7 +223,7 @@ jobs:
           resource-name: deployment/mlops-app-deployment
           show-kubectl-command: true
       - run:
-          name: Check status
+          name: Check status when deployment fail
           when: "on_fail"
           command: kubectl get events
 
@@ -290,24 +290,24 @@ jobs:
 workflows:
   my_workflow:
     jobs:
-      # - build-test-app
-      # - create-cluster-eks:
-      #     requires:
-      #       - "build-test-app"
-      #     filters:
-      #       branches:
-      #         only:
-      #           - main
-      # - test-cluster-eks:
-      #     requires:
-      #       - create-cluster-eks
-      #     filters:
-      #       branches:
-      #         only:
-      #           - main
+      - build-test-app
+      - create-cluster-eks:
+          requires:
+            - "build-test-app"
+          filters:
+            branches:
+              only:
+                - main
+      - test-cluster-eks:
+          requires:
+            - create-cluster-eks
+          filters:
+            branches:
+              only:
+                - main
       - create-deployment-kubenetes:
-          # requires:
-          #   - test-cluster-eks
+          requires:
+            - test-cluster-eks
           filters:
             branches:
               only:
