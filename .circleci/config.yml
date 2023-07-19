@@ -244,7 +244,7 @@ jobs:
           name: Create working directory
           command: |
             # no error if existing, make parent directories as needed
-            mkdir --parents $(eval echo "$CIRCLE_WORKING_DIRECTORY")
+            mkdir --parents $(eval echo "$WORKSPACE_DIR")
       - run:
           name: "Fetch stacks and save the old stack name"
           command: |
