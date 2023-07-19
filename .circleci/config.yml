@@ -162,12 +162,16 @@ commands:
   
 # Define the jobs we want to run for this project
 jobs:
-  build-app:
+  build-test-app:
     executor: 
       name: python/default
       tag: "3.9.17"
-    # docker:
-    #   - image: circleci/python:3.9.4
+
+    environment:
+      # Set the DOCKERHUB_USERNAME environment variable for pushing the image to Docker Hub
+      DOCKERHUB_USERNAME: vectornguyen76
+      IMAGE_NAME: bentoml_service
+      IMAGE_TAG: latest
 
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
@@ -195,7 +199,7 @@ jobs:
 
       - save_cache:
           paths:
-            - $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/venv
+            - /home/circleci/project/capstone-project/venv
           key: dependencies-{{ checksum "capstone-project/requirements.txt" }}
 
       - run:
@@ -205,12 +209,12 @@ jobs:
             . venv/bin/activate
             pylint service.py --disable=R,C,W1203,W1202,unsubscriptable-object,no-name-in-module  
 
-      - run:
-          name: Convert to bentoml model
-          command: |
-            cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-            . venv/bin/activate
-            python bentoml_model.py
+      # - run:
+      #     name: Convert to bentoml model
+      #     command: |
+      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
+      #       . venv/bin/activate
+      #       python bentoml_model.py
 
       # - run:
       #     name: Build BentoML service
@@ -229,7 +233,7 @@ jobs:
       #       ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
 
       - run:
-          name: Import BentoML service
+          name: Import and containerize BentoML service
           command: |
             cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
             . venv/bin/activate
@@ -238,6 +242,22 @@ jobs:
             bentoml list
 
             bentoml containerize bentoml_service:latest
+
+      - run:
+          name: Login to Docker Hub
+          command: |
+            # Log in to Docker Hub
+            docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+            
+      - run: 
+          name: Add tag to image
+          command: |
+            docker image tag $IMAGE_NAME:oqlrrpbfhkrraaav $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+
+      - run:
+          name: Push the image to Docker Hub
+          command: |
+            docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
 
       - run:
           name: Build app
@@ -258,7 +278,7 @@ jobs:
           paths:
             - "artifact-app.tar.gz"
 
-  build-and-push:
+  push-docker-hub:
     # Use the Docker orb in the context of this job
     docker:
       - image: docker:17.05.0-ce-git
@@ -295,11 +315,7 @@ jobs:
           command: |
             # Log in to Docker Hub
             docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-      - run:
-          name: Push the mlflow to Docker Hub
-          command: |
-            # Push the image to Docker Hub
-            docker-compose -f deployment/mlflow/docker-compose.yml push
+            
       - run:
           name: Push the predictor to Docker Hub
           command: |
@@ -387,17 +403,17 @@ workflows:
   # Name the workflow
   my_workflow:
     jobs:
-      - build-app
-      - build-and-push:
+      - build-test-app
+      - push-docker-hub:
           requires:
-            - "build-app"
+            - "build-test-app"
           filters:
             branches:
               only:
                 - main
       - create-infrastructure:
           requires:
-            - "build-and-push"
+            - "push-docker-hub"
           filters:
             branches:
               only:
