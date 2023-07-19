@@ -35,5 +35,5 @@ spec:
             - name: BENTOML_CONFIG
               value: /home/bentoml/configuration.yml
           ports:
-            - containerPort: 3000   # The port inside the container that I want to open
+            - containerPort: 3000   # The port inside the container want to open
           command: ["serve"]
