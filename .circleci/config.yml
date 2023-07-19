@@ -136,10 +136,9 @@ jobs:
           node-type: "t3.medium"
           nodes: 3
 
-      # Remove the cluster eks
-      - aws-eks/delete-cluster:
-          cluster-name: mlops-cluster-$CUR_SHORT_HASH
-          when: "on_fail"
+      # # Remove the cluster eks
+      # - aws-eks/delete-cluster:
+      #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
 
   test-cluster-eks:
     docker:
@@ -154,10 +153,9 @@ jobs:
             kubectl get services
           name: Test cluster
 
-      # Remove the cluster eks
-      - aws-eks/delete-cluster:
-          cluster-name: mlops-cluster-$CUR_SHORT_HASH
-          when: "on_fail"
+      # # Remove the cluster eks
+      # - aws-eks/delete-cluster:
+      #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
 
   create-deployment-kubenetes:
     docker:
@@ -177,10 +175,9 @@ jobs:
           resource-file-path: $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/master-deployment.yaml
           resource-name: mlops-resource-$CUR_SHORT_HASH
 
-      # Remove the cluster eks
-      - aws-eks/delete-cluster:
-          cluster-name: mlops-cluster-$CUR_SHORT_HASH
-          when: "on_fail"
+      # # Remove the cluster eks
+      # - aws-eks/delete-cluster:
+      #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
 
   clean-up:
     docker:
@@ -192,7 +189,6 @@ jobs:
       # Remove the cluster eks
       - aws-eks/delete-cluster:
           cluster-name: mlops-cluster-$CUR_SHORT_HASH
-          when: "always"
 
 # Sequential workflow
 workflows:
