@@ -219,7 +219,8 @@ jobs:
       - kubernetes/create-or-update-resource:
           get-rollout-status: true
           resource-file-path: $PROJECT_ROOT_DIR/master-deployment.yaml
-
+          resource-name: deployment/mlops-app-deployment
+          
       # # Remove the cluster eks
       # - aws-eks/delete-cluster:
       #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
