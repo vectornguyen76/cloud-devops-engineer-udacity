@@ -222,6 +222,11 @@ jobs:
           resource-file-path: $PROJECT_ROOT_DIR/master-deployment.yaml
           resource-name: deployment/mlops-app-deployment
           show-kubectl-command: true
+      - run:
+          name: Check status
+          when: "on_fail"
+          command: kubectl get events
+
       # # Remove the cluster eks
       # - aws-eks/delete-cluster:
       #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
