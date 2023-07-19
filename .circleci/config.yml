@@ -24,6 +24,45 @@ commands:
             echo 'export TEMPLATE_ROOT_DIR=".circleci/files"' >> "$BASH_ENV"
             echo 'export PROJECT_TAG="mlops-capstone-project"' >> "$BASH_ENV"
 
+  destroy_environment:
+    parameters:
+      stack_name:
+        type: string
+      when:
+        default: "on_fail"
+        type: enum
+        enum: ["always", "on_success", "on_fail"]
+    steps:     
+      - run:
+          name: "Delete << parameters.stack_name >> stack"
+          when: << parameters.when >>
+          shell: /bin/bash
+          command: |
+            # Get stack id for the delete_stack waiter
+            stack_info=$(aws cloudformation describe-stacks --stack-name << parameters.stack_name >> --query "Stacks[*] | [0].StackId" 2>&1)
+            if echo $stack_info | grep 'does not exist' > /dev/null
+            then
+              echo "Stack does not exist."
+              echo $stack_info
+              exit 0
+            fi
+            if echo $stack_info | grep 'ValidationError' > /dev/null
+            then
+              echo $stack_info
+              exit 1
+            else
+              aws cloudformation delete-stack --stack-name << parameters.stack_name >>
+              echo $stack_info
+              aws cloudformation wait stack-delete-complete --stack-name $stack_info
+              if [ "<< parameters.when >>" = "on_fail" ]
+              then
+                echo "Roll back completed. Green environment destroyed."
+                exit 0
+              fi
+              echo "Stack << parameters.stack_name >> cleaned up"
+              exit 0
+            fi
+
 # Define the jobs we want to run for this project
 jobs:
   build-test-app:
@@ -127,7 +166,8 @@ jobs:
     docker:
       - image: cimg/python:3.10
     steps:
-      - checkout
+      # Export environment variable
+      - export
       - kubernetes/install:
           kubectl-version: v1.22.0
       - aws-eks/create-cluster:
@@ -144,6 +184,8 @@ jobs:
     docker:
       - image: cimg/python:3.10
     steps:
+      # Export environment variable
+      - export
       - kubernetes/install:
           kubectl-version: v1.22.0
       - aws-eks/update-kubeconfig-with-authenticator:
@@ -161,7 +203,10 @@ jobs:
     docker:
       - image: cimg/python:3.10
     steps:
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
+      # Export environment variable
+      - export
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: mlops-cluster-$CUR_SHORT_HASH
           install-kubectl: true
@@ -175,15 +220,56 @@ jobs:
       #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
 
   clean-up:
-    docker:
-      - image: cimg/python:3.10
+    executor: aws-cli/default
     steps:
-      - kubernetes/install:
-          kubectl-version: v1.22.0
+      # This command will pull all of the files into a directory called project which can be found at ~/project.
+      - checkout
+      # Export environment variable
+      - export
+      # Set up AWS Credentials
+      - aws-cli/setup
+      - attach_workspace:
+          at: /home/circleci/workspace
+      - run:
+          name: "Fetch stacks and save the old stack name"
+          command: |
+            # Fetch the stack names
+            export STACKS=(
+              $(aws cloudformation list-stacks \
+                  --query "StackSummaries[*].StackName" \
+                  --no-paginate --output text \
+                  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE
+              )
+            )
+            for stack in ${STACKS[@]}
+            do
+              if [[ ! "$stack" =~ "$CUR_SHORT_HASH" ]]
+              then
+                if [[ "$stack" =~ "mlops-cluster" ]] && [[ "$stack" =~ "nodegroup" ]]
+                then
+                  touch $WORKSPACE_DIR/destroy_cluster_nodegroup_stack
+                  echo $stack > $WORKSPACE_DIR/destroy_cluster_nodegroup_stack
+                  
+                  echo "destroy_cluster_nodegroup_stack:" $stack
+                fi
+                if [[ "$stack" =~ "mlops-cluster" ]] && [[ ! "$stack" =~ "nodegroup" ]]
+                then
+                  touch $WORKSPACE_DIR/destroy_cluster_stack
+                  echo $stack > $WORKSPACE_DIR/destroy_cluster_stack
 
-      # Remove the cluster eks
-      - aws-eks/delete-cluster:
-          cluster-name: mlops-cluster-$CUR_SHORT_HASH
+                  echo "destroy_cluster_stack:" $stack
+                fi
+              fi
+            done
+
+      # Remove the backend infrastructure
+      - destroy_environment:
+          stack_name: $(eval cat $WORKSPACE_DIR/destroy_cluster_nodegroup_stack)
+          when: "always"
+      # Remove the frontend infrastructure
+      - destroy_environment:
+          stack_name: $(eval cat $WORKSPACE_DIR/destroy_cluster_stack)
+          when: "always"
 
 # Sequential workflow
 workflows:
