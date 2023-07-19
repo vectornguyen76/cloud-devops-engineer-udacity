@@ -241,6 +241,11 @@ jobs:
       # Set up AWS Credentials
       - aws-cli/setup
       - run:
+          name: Create working directory
+          command: |
+            # no error if existing, make parent directories as needed
+            mkdir --parents $(eval echo "$CIRCLE_WORKING_DIRECTORY")
+      - run:
           name: "Fetch stacks and save the old stack name"
           command: |
             # Fetch the stack names
