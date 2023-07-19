@@ -294,8 +294,8 @@ workflows:
       #         only:
       #           - main
       - create-deployment-kubenetes:
-          requires:
-            - test-cluster-eks
+          # requires:
+          #   - test-cluster-eks
           filters:
             branches:
               only:
