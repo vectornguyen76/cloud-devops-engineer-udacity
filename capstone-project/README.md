@@ -1,4 +1,5 @@
 # Capstone Project:  CI/CD, Containerization and Kubernetes Deployment for Machine Learning
+[![vectornguyen76](https://circleci.com/gh/vectornguyen76/cloud-devops-engineer-udacity.svg?style=svg)](https://app.circleci.com/pipelines/github/vectornguyen76/cloud-devops-engineer-udacity)
 ## Overview
 In this project, I will apply the skills and knowledge which were developed throughout the Cloud DevOps Nanodegree program. These include:
 - Working in AWS
@@ -45,17 +46,6 @@ In this project, I will apply the skills and knowledge which were developed thro
     bentoml import ./bentoml_service-oqlrrpbfhkrraaav.bento
     ```
 
-# Deploy to kubernetes in local
-minikube start --driver=docker
-
-kubectl get nodes
-
-kubectl apply -f=master-deployment.yaml
-
-minikube dashboard
-
-minikube service mlops
-
 ### Development
 1. Build BentoML service
     ```
@@ -76,6 +66,94 @@ minikube service mlops
     docker run -it --rm -p 3000:3000 bentoml_service:oqlrrpbfhkrraaav serve
     ```
 
-# Reference 
+### Deploy to kubernetes in local
+1. Start cluster use minikube and docker
+    ```
+    minikube start --driver=docker
+    ```
+    <p align="center">
+    <img src="./screenshots/minikube.jpg" alt="animated" />
+    </p>
+    <p align="center">Start cluster use minikube and docker</p>
+2. Show node ready
+    ```
+    kubectl get nodes
+    ```
+    <p align="center">
+    <img src="./screenshots/show-nodes-ready.jpg" alt="animated" />
+    </p>
+    <p align="center">Show nodes ready</p>
+3. Deploy kubenetes template
+    ```
+    kubectl apply -f=master-deployment.yaml
+    ```
+    <p align="center">
+    <img src="./screenshots/apply-deployment-template.jpg" alt="animated" />
+    </p>
+    <p align="center">Apply deployment template</p>
+4. Show dashboard to check status
+    ```
+    minikube dashboard
+    ```
+    <p align="center">
+    <img src="./screenshots/show-dashboard-cmd.jpg" alt="animated" />
+    </p>
+    <p align="center">
+    <img src="./screenshots/kubernetes-local.jpg" alt="animated" />
+    </p>
+    <p align="center">Show dashboard to check status</p>
+5. Expose a deployment with a service
+    ```
+    minikube service mlops
+    ```
+    <p align="center">
+    <img src="./screenshots/expose-service-cmd.jpg" alt="animated" />
+    </p>
+    <p align="center">
+    <img src="./screenshots/bentoml-service-local.jpg" alt="animated" />
+    </p>
+    <p align="center">Test application successfully!</p>
+### Deploy to kubenetes in cloud
+1. Build and run cicd pipeline 
+    <p align="center">
+    <img src="./screenshots/build-test-push-app.jpg" alt="animated" />
+    </p>
+    <p align="center">Build, test app with pylint - Containerize and push image to docker hub</p>
+
+    <p align="center">
+    <img src="./screenshots/create-cluster-eks-cicd.jpg" alt="animated" />
+    </p>
+    <p align="center">Create cluster in EKS CI/CD</p>
+
+    <p align="center">
+    <img src="./screenshots/create-deployment-kubernetes-cicd.jpg" alt="animated" />
+    </p>
+    <p align="center">Create/update deployment template kubernetes in CI/CD</p>
+2. Check resouces created
+    <p align="center">
+    <img src="./screenshots/cloudformation.jpg" alt="animated" />
+    </p>
+    <p align="center">Check Cloudformation</p>
+
+    <p align="center">
+    <img src="./screenshots/kubernetes-eks.jpg" alt="animated" />
+    </p>
+    <p align="center">Check EKS</p>
+
+    <p align="center">
+    <img src="./screenshots/ec2-status.jpg" alt="animated" />
+    </p>
+    <p align="center">Check EC2 Status</p>
+
+    <p align="center">
+    <img src="./screenshots/bentoml-service-loadbalancer.jpg" alt="animated" />
+    </p>
+    <p align="center">Check connect to app via loadbalacer endpoint</p>
+
+    <p align="center">
+    <img src="./screenshots/test-app-successfully.jpg" alt="animated" />
+    </p>
+    <p align="center">Test application successfully!</p>
+## Reference 
 - https://circleci.com/developer/orbs/orb/circleci/aws-eks
 - https://circleci.com/developer/orbs/orb/circleci/kubernetes
