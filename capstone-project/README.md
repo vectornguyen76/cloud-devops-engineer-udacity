@@ -3,9 +3,9 @@
 ## Overview
 In this project, I will apply the skills and knowledge which were developed throughout the Cloud DevOps Nanodegree program. These include:
 - Working in AWS
-- Using Jenkins or Circle CI to implement Continuous Integration and Continuous Deployment
+- Using Circle CI to implement Continuous Integration and Continuous Deployment
 - Building pipelines
-- Working with Ansible and CloudFormation to deploy clusters
+- Working with CloudFormation to deploy clusters
 - Building Kubernetes clusters
 - Building Docker containers in pipelines
 
@@ -52,6 +52,7 @@ In this project, I will apply the skills and knowledge which were developed thro
     bentoml build
     ```
     Bento is the unit of deployment in BentoML, one of the most important artifacts to keep track of in your model deployment workflow. BentoML provides CLI commands and APIs for [managing Bentos](https://docs.bentoml.com/en/latest/concepts/bento.html#managing-bentos) and moving them around, see the Managing Bentos section to learn more.
+
 2. Generate Docker Image
     A docker image can be automatically generated from a Bento for production deployment, via the bentoml containerize CLI command:
     ```
@@ -75,6 +76,7 @@ In this project, I will apply the skills and knowledge which were developed thro
     <img src="./screenshots/minikube.jpg" alt="animated" />
     </p>
     <p align="center">Start cluster use minikube and docker</p>
+
 2. Show node ready
     ```
     kubectl get nodes
@@ -83,6 +85,7 @@ In this project, I will apply the skills and knowledge which were developed thro
     <img src="./screenshots/show-nodes-ready.jpg" alt="animated" />
     </p>
     <p align="center">Show nodes ready</p>
+
 3. Deploy kubenetes template
     ```
     kubectl apply -f=master-deployment.yaml
@@ -91,6 +94,7 @@ In this project, I will apply the skills and knowledge which were developed thro
     <img src="./screenshots/apply-deployment-template.jpg" alt="animated" />
     </p>
     <p align="center">Apply deployment template</p>
+
 4. Show dashboard to check status
     ```
     minikube dashboard
@@ -102,6 +106,7 @@ In this project, I will apply the skills and knowledge which were developed thro
     <img src="./screenshots/kubernetes-local.jpg" alt="animated" />
     </p>
     <p align="center">Show dashboard to check status</p>
+
 5. Expose a deployment with a service
     ```
     minikube service mlops
@@ -129,6 +134,7 @@ In this project, I will apply the skills and knowledge which were developed thro
     <img src="./screenshots/create-deployment-kubernetes-cicd.jpg" alt="animated" />
     </p>
     <p align="center">Create/update deployment template kubernetes in CI/CD</p>
+
 2. Check resouces created
     <p align="center">
     <img src="./screenshots/cloudformation.jpg" alt="animated" />
@@ -154,6 +160,13 @@ In this project, I will apply the skills and knowledge which were developed thro
     <img src="./screenshots/test-app-successfully.jpg" alt="animated" />
     </p>
     <p align="center">Test application successfully!</p>
+
+3. Use Blue/Green Deployment
+    <p align="center">
+    <img src="./screenshots/clean-up.jpg" alt="animated" />
+    </p>
+    <p align="center">Use Blue/Green Deployment</p> 
+    
 ## Reference 
 - https://circleci.com/developer/orbs/orb/circleci/aws-eks
 - https://circleci.com/developer/orbs/orb/circleci/kubernetes
