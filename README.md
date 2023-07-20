@@ -14,3 +14,9 @@ Learn to design and deploy infrastructure as code, build and monitor CI/CD pipel
 - Learn to operationalize both existing and new microservices and apply containers best practices. 
 - Learn to deploy Machine Learning microservices that are elastic and fault tolerant. 
 - Learn to pick the appropriate abstraction for microservices: Serverless (AWS Lambda) or Container Orchestration (Kubernetes).
+
+## Certificate
+<p align="center">
+<img src="./certificate.png" alt="animated" />
+</p>
+<p align="center">Cloud DevOps Engineer Udacity Certificate</p>
