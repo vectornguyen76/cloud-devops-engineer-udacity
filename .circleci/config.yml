@@ -21,8 +21,6 @@ commands:
           command: |
             echo 'export WORKSPACE_DIR="/home/circleci/workspace"' >> "$BASH_ENV"
             echo 'export PROJECT_ROOT_DIR="capstone-project"' >> "$BASH_ENV"
-            echo 'export TEMPLATE_ROOT_DIR=".circleci/files"' >> "$BASH_ENV"
-            echo 'export PROJECT_TAG="mlops-capstone-project"' >> "$BASH_ENV"
 
   destroy_environment:
     parameters:
@@ -32,6 +30,11 @@ commands:
         default: "on_fail"
         type: enum
         enum: ["always", "on_success", "on_fail"]
+      wait:
+        description: Wait stack delete complete
+        type: boolean
+        default: false
+
     steps:     
       - run:
           name: "Delete << parameters.stack_name >> stack"
@@ -53,7 +56,13 @@ commands:
             else
               aws cloudformation delete-stack --stack-name << parameters.stack_name >>
               echo $stack_info
-              aws cloudformation wait stack-delete-complete --stack-name << parameters.stack_name >>
+
+              if [ "<< parameters.wait >>" = true ]
+              then
+                echo "Wait stack delete complete..."
+                aws cloudformation wait stack-delete-complete --stack-name << parameters.stack_name >>
+              fi
+
               if [ "<< parameters.when >>" = "on_fail" ]
               then
                 echo "Roll back completed. Green environment destroyed."
@@ -112,29 +121,6 @@ jobs:
             . venv/bin/activate
             pylint service.py --disable=R,C,W1203,W1202,unsubscriptable-object,no-name-in-module  
 
-      # - run:
-      #     name: Convert to bentoml model
-      #     command: |
-      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-      #       . venv/bin/activate
-      #       python bentoml_model.py
-
-      # - run:
-      #     name: Build BentoML service
-      #     command: |
-      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-      #       . venv/bin/activate
-      #       bentoml build
-
-      # - run:
-      #     name: Export BentoML service
-      #     command: |
-      #       cd $(eval echo "$CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR")
-      #       . venv/bin/activate
-      #       bentoml export bentoml_service:latest $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
-
-      #       ls $CIRCLE_WORKING_DIRECTORY/$PROJECT_ROOT_DIR/bentoml_service
-
       - run:
           name: Import and containerize BentoML service
           command: |
@@ -182,10 +168,6 @@ jobs:
           tags: "Owner=Vector"
           show-eksctl-command: true
 
-      # # Remove the cluster eks
-      # - aws-eks/delete-cluster:
-      #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
-
   test-cluster-eks:
     docker:
       - image: cimg/python:3.10
@@ -200,10 +182,6 @@ jobs:
           command: |
             kubectl get services
           name: Test cluster
-
-      # # Remove the cluster eks
-      # - aws-eks/delete-cluster:
-      #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
 
   create-deployment-kubenetes:
     docker:
@@ -226,10 +204,6 @@ jobs:
           name: Check status when deployment fail
           when: "on_fail"
           command: kubectl get events
-
-      # # Remove the cluster eks
-      # - aws-eks/delete-cluster:
-      #     cluster-name: mlops-cluster-$CUR_SHORT_HASH
 
   clean-up:
     executor: aws-cli/default
@@ -281,6 +255,8 @@ jobs:
       - destroy_environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroy_cluster_nodegroup_stack)
           when: "always"
+          wait: true
+          
       # Remove the cluster infrastructure
       - destroy_environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroy_cluster_stack)
