@@ -1,27 +1,27 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Creates the required network infrastructure for Public and Private routing with Internet access
 Parameters:
-    VpcCIDR:
-        Description: "VPC range"
-        Type: String
-        Default: ""
+  VpcCIDR:
+    Description: "VPC range"
+    Type: String
+    Default: ""
 
-    PublicSubnetCIDR:
-        Description: "Public subnet CIDR block"
-        Type: String
-        Default: ""
+  PublicSubnetCIDR:
+    Description: "Public subnet CIDR block"
+    Type: String
+    Default: ""
 
-    PrivateSubnetCIDR:
-        Description: "Private subnet CIDR block"
-        Type: String
-        Default: ""
-Resources: 
+  PrivateSubnetCIDR:
+    Description: "Private subnet CIDR block"
+    Type: String
+    Default: ""
+Resources:
   VPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: !Ref VpcCIDR
       EnableDnsSupport: true
-      Tags: 
+      Tags:
         - Key: Name
           Value: "Main VPC"
 
@@ -41,37 +41,37 @@ Resources:
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: 'us-east-1a'
+      AvailabilityZone: "us-east-1a"
       VpcId: !Ref VPC
       CidrBlock: !Ref PublicSubnetCIDR
-      Tags: 
+      Tags:
         - Key: Name
           Value: "Public Subnet AZ1"
-          
+
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: 'us-east-1a'
+      AvailabilityZone: "us-east-1a"
       VpcId: !Ref VPC
       CidrBlock: !Ref PrivateSubnetCIDR
-      Tags: 
+      Tags:
         - Key: Name
           Value: "Private Subnet AZ1"
 
   NATGateway:
     Type: AWS::EC2::NatGateway
     Properties:
-        AllocationId: !GetAtt NATGatewayEIP.AllocationId
-        SubnetId: !Ref PublicSubnet
-        Tags:
+      AllocationId: !GetAtt NATGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+      Tags:
         - Key: Name
           Value: "NAT to be used by servers in the private subnet"
 
   NATGatewayEIP:
     Type: AWS::EC2::EIP
     Properties:
-        Domain: vpc
-        Tags:
+      Domain: vpc
+      Tags:
         - Key: Name
           Value: "Elastic IP for our NAT Gateway"
 
@@ -79,7 +79,7 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-      Tags: 
+      Tags:
         - Key: Name
           Value: "Public Route Table"
 
@@ -87,7 +87,7 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-      Tags: 
+      Tags:
         - Key: Name
           Value: "Private Route Table"
 
@@ -101,24 +101,24 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet
-      RouteTableId: !Ref PrivateRouteTable     
+      RouteTableId: !Ref PrivateRouteTable
 
   PublicRouteNATGateway:
     DependsOn: NATGateway
     Type: AWS::EC2::Route
     Properties:
-        RouteTableId: !Ref PublicRouteTable
-        DestinationCidrBlock: '0.0.0.0/0'
-        GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
 
   PrivateRouteNATGateway:
     DependsOn: NATGateway
     Type: AWS::EC2::Route
     Properties:
-        RouteTableId: !Ref PrivateRouteTable
-        DestinationCidrBlock: '0.0.0.0/0'
-        NatGatewayId: !Ref NATGateway
-      
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId: !Ref NATGateway
+
 Outputs:
   VPC:
     Description: "A reference to the created VPC"

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create bastion host to SSH to private server
-Parameters: 
+Parameters:
   EnvironmentName:
     Description: An environment name that will be prefixed to resource names
     Type: String
@@ -14,8 +14,8 @@ Parameters:
     Description: Key Pair Name Created
     Type: String
 
-Resources: 
-# Security Group
+Resources:
+  # Security Group
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -33,13 +33,13 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 
+          CidrIp:
             Fn::ImportValue: !Sub "${EnvironmentName}-PrivateSubnet1CIDR"
           Description: "Allow SSH from Bastion Host to Private Server"
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 
+          CidrIp:
             Fn::ImportValue: !Sub "${EnvironmentName}-PrivateSubnet2CIDR"
           Description: "Allow SSH from Bastion Host to Private Server"
       Tags:
@@ -48,7 +48,7 @@ Resources:
 
   # IAM Role to allow EC2 Session Manager to access our server
   IAMRole:
-    Type: 'AWS::IAM::Role'
+    Type: "AWS::IAM::Role"
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -58,7 +58,7 @@ Resources:
               Service:
                 - ec2.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
+              - "sts:AssumeRole"
       Path: /
       Policies:
         - PolicyName: root
@@ -66,13 +66,13 @@ Resources:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action: '*'
-                Resource: '*'
+                Action: "*"
+                Resource: "*"
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} IAMRole
 
-# Instance Profile
+  # Instance Profile
   ServerInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
@@ -80,20 +80,20 @@ Resources:
       Roles:
         - !Ref IAMRole
 
-# BastionHost EC2 Instance
-  BastionHostInstance: 
+  # BastionHost EC2 Instance
+  BastionHostInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t2.micro
       ImageId: !Ref AMItoUse
       KeyName: !Ref KeyPairName
       IamInstanceProfile: !Ref ServerInstanceProfile
-      NetworkInterfaces: 
+      NetworkInterfaces:
         - AssociatePublicIpAddress: true
           DeviceIndex: "0"
-          GroupSet: 
-            - !Ref SecurityGroup 
-          SubnetId: 
+          GroupSet:
+            - !Ref SecurityGroup
+          SubnetId:
             Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
       Tags:
         - Key: Name

@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create security groups, autoscaling group, launch configuration, target group, load balancer, and listener.
-Parameters: 
+Parameters:
   EnvironmentName:
     Description: An environment name that will be prefixed to resource names
     Type: String
@@ -27,7 +27,7 @@ Parameters:
       - t2.medium
       - t3.medium
 
-Resources: 
+Resources:
   LoadBalacerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -35,15 +35,15 @@ Resources:
       VpcId:
         Fn::ImportValue: !Sub "${EnvironmentName}-VPCID"
       SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} LoadBalacerSecurityGroup
@@ -53,22 +53,21 @@ Resources:
     Properties:
       GroupDescription: Allow http to our hosts and SSH from local only
       VpcId:
-        Fn::ImportValue:
-          !Sub "${EnvironmentName}-VPCID"
+        Fn::ImportValue: !Sub "${EnvironmentName}-VPCID"
       SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 80
-        ToPort: 80
-        CidrIp: 0.0.0.0/0
-      - IpProtocol: tcp
-        FromPort: 22
-        ToPort: 22
-        CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
-      - IpProtocol: tcp
-        FromPort: 0
-        ToPort: 65535
-        CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} AutoScalingSecurityGroup
@@ -77,12 +76,10 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Subnets:
-      - Fn::ImportValue: 
-          !Sub "${EnvironmentName}-PUB1-SN"
-      - Fn::ImportValue: 
-          !Sub "${EnvironmentName}-PUB2-SN"
-      SecurityGroups: 
-      - !Ref LoadBalacerSecurityGroup
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
+      SecurityGroups:
+        - !Ref LoadBalacerSecurityGroup
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} LoadBalancer
@@ -92,25 +89,25 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-      - Type: forward
-        TargetGroupArn: !Ref LoadBalancingTargetGroup
+        - Type: forward
+          TargetGroupArn: !Ref LoadBalancingTargetGroup
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
 
   # Confirm Actions for Listener
   LoadBalancingListenerRule:
-      Type: AWS::ElasticLoadBalancingV2::ListenerRule
-      Properties:
-        Actions:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
         - Type: forward
           TargetGroupArn: !Ref LoadBalancingTargetGroup
-        Conditions:
+      Conditions:
         - Field: path-pattern
           Values: [/]
-        ListenerArn: !Ref LoadBalancingListener
-        Priority: 1
-  
+      ListenerArn: !Ref LoadBalancingListener
+      Priority: 1
+
   # Connect and check health EC2
   LoadBalancingTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -123,7 +120,7 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 5
-      VpcId: 
+      VpcId:
         Fn::ImportValue:
           Fn::Sub: "${EnvironmentName}-VPCID"
       Tags:
@@ -154,7 +151,7 @@ Resources:
 
   EC2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
-    Properties: 
+    Properties:
       LaunchTemplateName: !Sub "${EnvironmentName}-LaunchTemplate"
       LaunchTemplateData:
         UserData:
@@ -170,30 +167,29 @@ Resources:
         IamInstanceProfile:
           Arn: !GetAtt WebServerInstanceProfile.Arn
         SecurityGroupIds:
-        - !Ref AutoScalingSecurityGroup
+          - !Ref AutoScalingSecurityGroup
         InstanceType: !Ref InstanceType
         BlockDeviceMappings:
-        - DeviceName: "/dev/sdk"
-          Ebs:
-            VolumeSize: '10'
+          - DeviceName: "/dev/sdk"
+            Ebs:
+              VolumeSize: "10"
 
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
       VPCZoneIdentifier:
-      - Fn::ImportValue: 
-          !Sub "${EnvironmentName}-PRIV-NETS"
+        - Fn::ImportValue: !Sub "${EnvironmentName}-PRIV-NETS"
       LaunchTemplate:
         LaunchTemplateId: !Ref EC2LaunchTemplate
-        Version: '1'
-      MinSize: '2'
-      MaxSize: '5'
+        Version: "1"
+      MinSize: "2"
+      MaxSize: "5"
       TargetGroupARNs:
-      - Ref: LoadBalancingTargetGroup
+        - Ref: LoadBalancingTargetGroup
       Tags:
         - Key: Name
           PropagateAtLaunch: false
-          Value: !Sub ${EnvironmentName} AutoScalingGroup 
+          Value: !Sub ${EnvironmentName} AutoScalingGroup
 
 Outputs:
   WebServerLoadBalancerURL:
