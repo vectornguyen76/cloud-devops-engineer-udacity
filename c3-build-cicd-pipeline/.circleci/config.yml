@@ -5,7 +5,7 @@ orbs:
   python: circleci/python@2.1.1
 commands:
   # Reusable Job Code
-  export:
+  export-env:
     steps: 
       - run:
           name: "Get git commit short-hash for the current and the previous commit"
@@ -14,9 +14,6 @@ commands:
             echo 'export current_commit=<< pipeline.git.revision >>' >> "$BASH_ENV"
             echo 'export CUR_SHORT_HASH="${current_commit:0:7}"' >> "$BASH_ENV"
             # echo 'export CUR_SHORT_HASH="TEST"' >> "$BASH_ENV"
-            # Git hash for the previous commit
-            echo 'export previous_commit=<< pipeline.git.base_revision >>' >> "$BASH_ENV"
-            echo 'export PRE_SHORT_HASH="${previous_commit:0:7}"' >> "$BASH_ENV"
       - run:
           name: "Export environment variable"
           command: |
@@ -31,7 +28,6 @@ commands:
       migrations-key:
         type: string
         default: ""
-
     steps:
       - run:
           name: "Revert migrations if fail"
@@ -51,7 +47,7 @@ commands:
             # Revert migration on fail
             npm run migrations:revert
 
-  deploy_stack:
+  deploy-stack:
     parameters:
       stack_name:
         type: string
@@ -71,7 +67,7 @@ commands:
             --region us-east-1 \
             --tags Project="udacity-project" \
             --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM"
-  destroy_environment:
+  destroy-environment:
     parameters:
       stack_name:
         type: string
@@ -82,83 +78,7 @@ commands:
         default: "on_fail"
         type: enum
         enum: ["always", "on_success", "on_fail"]
-      aws-access-key-id:
-        default: AWS_ACCESS_KEY_ID
-        description: >
-          AWS access key id for IAM role. Set this to the name of
-          the environment variable you will use to hold this
-          value, i.e. AWS_ACCESS_KEY.
-        type: env_var_name
-      aws-region:
-        default: AWS_DEFAULT_REGION
-        description: >
-          Env var of AWS region to operate in
-          (defaults to AWS_DEFAULT_REGION)
-        type: env_var_name
-      aws-secret-access-key:
-        default: AWS_SECRET_ACCESS_KEY
-        description: >
-          AWS secret key for IAM role. Set this to the name of
-          the environment variable you will use to hold this
-          value, i.e. AWS_SECRET_ACCESS_KEY.
-        type: env_var_name
-      profile-name:
-        default: default
-        description: Profile name to be configured.
-        type: string
     steps:
-      # Set up AWS Credentials when executor != aws cli
-      - run:
-          name: "Install AWS CLI"
-          when: << parameters.when >>
-          command: |
-            if aws --version | grep "aws-cli/" > /dev/null
-            then
-              echo "AWS CLI is already installed, skipping installation."
-              exit 0
-            fi
-
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-      - run:
-          name: "Configure AWS credential"
-          environment:
-            PARAM_AWS_CLI_ACCESS_KEY_ID: <<parameters.aws-access-key-id>>
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY: <<parameters.aws-secret-access-key>>
-            PARAM_AWS_CLI_REGION: <<parameters.aws-region>>
-            PARAM_AWS_CLI_PROFILE_NAME: <<parameters.profile-name>>
-          when: << parameters.when >>
-          command: |
-            if aws --version | grep "aws-cli/" > /dev/null
-            then
-              echo "Due to AWS CLI is already installed, skipping configuration AWS credential."
-              exit 0
-            fi
-
-            PARAM_AWS_CLI_ACCESS_KEY_ID=$(eval echo "\$$PARAM_AWS_CLI_ACCESS_KEY_ID")
-
-            PARAM_AWS_CLI_SECRET_ACCESS_KEY=$(eval echo "\$$PARAM_AWS_CLI_SECRET_ACCESS_KEY")
-
-            PARAM_AWS_CLI_REGION=$(eval echo "\$$PARAM_AWS_CLI_REGION")
-
-            if [ -z "$PARAM_AWS_CLI_ACCESS_KEY_ID" ] || [ -z "${PARAM_AWS_CLI_SECRET_ACCESS_KEY}" ]
-            then
-              echo "Cannot configure profile. AWS access key id and AWS secret access key must be provided."
-              exit 1
-            fi
-
-            aws configure set \
-              aws_access_key_id "$PARAM_AWS_CLI_ACCESS_KEY_ID" \
-              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
-
-            aws configure set \
-              aws_secret_access_key "$PARAM_AWS_CLI_SECRET_ACCESS_KEY" \
-              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
-
-            aws configure set \
-              region "$PARAM_AWS_CLI_REGION" \
-              --profile "$PARAM_AWS_CLI_PROFILE_NAME"
       - run:
           name: "Empty << parameters.bucket_name >> bucket"
           when: << parameters.when >>
@@ -203,7 +123,7 @@ commands:
             else
               aws cloudformation delete-stack --stack-name << parameters.stack_name >>
               echo $stack_info
-              aws cloudformation wait stack-delete-complete --stack-name $stack_info
+              aws cloudformation wait stack-delete-complete --stack-name << parameters.stack_name >>
               if [ "<< parameters.when >>" = "on_fail" ]
               then
                 echo "Roll back completed. Green environment destroyed."
@@ -222,7 +142,7 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       - restore_cache:
           keys: [frontend-build]
       - run:
@@ -242,7 +162,7 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       - restore_cache:
           keys: [backend-build]
       - run: 
@@ -283,13 +203,12 @@ jobs:
 
   test-frontend:
     docker:
-      # Docker image here
       - image: circleci/node:13.8.0
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       - restore_cache:
           keys: [frontend-build]
       - run:
@@ -301,13 +220,12 @@ jobs:
                 
   test-backend:
     docker:
-      # Docker image here
       - image: circleci/node:13.8.0
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       - restore_cache:
           keys: [backend-build]
       - run:
@@ -319,13 +237,12 @@ jobs:
             
   scan-frontend:
     docker:
-      # Docker image here
       - image: circleci/node:13.8.0
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       # Checkout code from git
       - restore_cache:
           keys: [frontend-build]
@@ -339,18 +256,15 @@ jobs:
             ## If the "npm audit fix" command above could not fix all critical vulnerabilities, try “npm audit fix --force” again
             npm audit fix --force
             npm audit --audit-level=critical
-      # Restore from cache
 
   scan-backend:
     docker:
-      # Docker image here
       - image: circleci/node:13.8.0
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
-      # Checkout code from git
+      - export-env
       # Restore from cache
       - restore_cache:
           keys: [backend-build]
@@ -371,11 +285,11 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       # Set up AWS Credentials
       - aws-cli/setup
       # Create frontend server
-      - deploy_stack:
+      - deploy-stack:
           stack_name: Udapeople-Frontend-${CUR_SHORT_HASH}
           template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/frontend.yml
           parameter_overrides: BucketName=udapeople-frontend-$CUR_SHORT_HASH
@@ -399,21 +313,20 @@ jobs:
           paths: 
             - websiteurl
       # Rollback if fail
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
 
   deploy-backend-infrastructure:
     executor: aws-cli/default
-      # Docker image here that supports AWS CLI
     steps:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       # Set up AWS Credentials
       - aws-cli/setup
       # Create backend infrastructure
-      - deploy_stack:
+      - deploy-stack:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH
           template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/backend.yml
           parameter_overrides: file://$CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/backend-parameters.json
@@ -444,7 +357,7 @@ jobs:
             - "inventory.txt"
             - "backendpublicdns"
       # Rollback if fail
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH    
 
   configure-infrastructure: 
@@ -455,7 +368,9 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
+      # Set up AWS Credentials
+      - aws-cli/setup
       - add_ssh_keys:
           fingerprints: ["61:22:79:6b:8b:79:4e:87:e1:ae:71:57:02:9d:1a:f2"]
       - python/install-packages:
@@ -467,10 +382,10 @@ jobs:
           command: |
             ansible-playbook -i $WORKSPACE_DIR/inventory.txt $(eval echo "$CIRCLE_WORKING_DIRECTORY/.circleci/ansible/configure-server.yml")
       # Rollback if fail
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
           bucket_name: udapeople-frontend-$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH
 
   run-migrations:
@@ -480,7 +395,9 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
+      # Set up AWS Credentials
+      - aws-cli/setup
       - run:
           name: Run migrations
           command: |
@@ -503,9 +420,9 @@ jobs:
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH
     
   deploy-frontend:
@@ -515,7 +432,9 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
+      # Set up AWS Credentials
+      - aws-cli/setup
       - attach_workspace:
           at: /home/circleci/workspace
       - restore_cache:
@@ -547,10 +466,10 @@ jobs:
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
           bucket_name: udapeople-frontend-$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH   
                     
   deploy-backend:
@@ -561,7 +480,9 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
+      # Set up AWS Credentials
+      - aws-cli/setup
       - add_ssh_keys:
           fingerprints: ["61:22:79:6b:8b:79:4e:87:e1:ae:71:57:02:9d:1a:f2"]
       - python/install-packages:
@@ -582,10 +503,10 @@ jobs:
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
           bucket_name: udapeople-frontend-$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH
 
   smoke-test:
@@ -594,7 +515,7 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       # Set up AWS Credentials
       - aws-cli/setup
       - attach_workspace:
@@ -638,10 +559,10 @@ jobs:
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
           bucket_name: udapeople-frontend-$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH 
 
   promote-to-production:
@@ -650,22 +571,22 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       # Set up AWS Credentials
       - aws-cli/setup
       - attach_workspace:
           at: /home/circleci/workspace
-      - deploy_stack:
+      - deploy-stack:
           stack_name: Udapeople-Cloudfront-$CUR_SHORT_HASH
           template_file: $CIRCLE_WORKING_DIRECTORY/$TEMPLATE_ROOT_DIR/cloudfront.yml
           parameter_overrides: S3StaticHostUrl="udapeople-frontend-$CUR_SHORT_HASH.s3.amazonaws.com"
       # Rollback if fail
       - revert-migrations:
           migrations-key: migration_$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Frontend-$CUR_SHORT_HASH
           bucket_name: udapeople-frontend-$CUR_SHORT_HASH
-      - destroy_environment:
+      - destroy-environment:
           stack_name: Udapeople-Backend-$CUR_SHORT_HASH 
 
   clean-up:
@@ -674,7 +595,7 @@ jobs:
       # This command will pull all of the files into a directory called project which can be found at ~/project.
       - checkout
       # Export environment variable
-      - export
+      - export-env
       # Set up AWS Credentials
       - aws-cli/setup
       - attach_workspace:
@@ -716,15 +637,15 @@ jobs:
               fi
             done
       # Remove the cloudfront infrastructure
-      - destroy_environment:
+      - destroy-environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroycloudfrontstack)
           when: "always"
       # Remove the backend infrastructure
-      - destroy_environment:
+      - destroy-environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroybackendstack)
           when: "always"
       # Remove the frontend infrastructure
-      - destroy_environment:
+      - destroy-environment:
           stack_name: $(eval cat $WORKSPACE_DIR/destroyfrontendstack)
           bucket_name: $(eval cat $WORKSPACE_DIR/destroybucketname)
           when: "always"
