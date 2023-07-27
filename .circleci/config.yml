@@ -145,6 +145,8 @@ jobs:
       - checkout
       # Export environment variable
       - export
+      # Set up AWS Credentials
+      - aws-cli/setup
       - restore_cache:
           keys: [frontend-build]
       - run:
