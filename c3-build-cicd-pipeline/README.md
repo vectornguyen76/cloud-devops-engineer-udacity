@@ -30,8 +30,28 @@ This project will prove mastery of the following learning objectives:
 
 <p align="center">
 <img src="submission/screenshots/done-cicd-pipeline.jpg" alt="animated" />
+<em>Done CI/CD Pipeline</em>
 </p>
-<p align="center">Done CI/CD Pipeline</p>
+<br>
+<p align="center">
+<img src="submission/screenshots/SCREENSHOT11.jpg" alt="animated" />
+<em>Graphs of CPU, Disk and Memory utilization on systems being monitored</em>
+</p>
+<br>
+<p align="center">
+<img src="submission/screenshots/SCREENSHOT12.jpg" alt="animated" />
+<em>Alerts from a failing system that is being monitored</em>
+</p>
+<br>
+<p align="center">
+<img src="submission/screenshots/URL05_SCREENSHOT.jpg" alt="animated" />
+<em>Running Prometheus server and Udapeople server</em>
+</p>
+<br>
+<p align="center">
+<img src="submission/screenshots/URL03_SCREENSHOT.jpg" alt="animated" />
+<em>Front-end application in CloudFront</em>
+</p>
 
 ### License
 
